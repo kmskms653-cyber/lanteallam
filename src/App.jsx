@@ -9,73 +9,143 @@ export default function App() {
   const handleLogin = (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('جاري الاتصال بالنظام...');
+    setMessage('جاري تسجيل الدخول...');
     setTimeout(() => {
       setLoading(false);
       setMessage('تم تسجيل الدخول بنجاح! أهلاً بك في منصة لنتعلم.');
-    }, 1500);
+    }, 1200);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 flex items-center justify-center p-4" dir="rtl">
-      <div className="bg-white/90 backdrop-blur-md w-full max-w-md rounded-2xl shadow-xl p-8 border border-white/60 text-right">
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #e0e7ff 0%, #e0f2fe 50%, #f3e8ff 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      direction: 'rtl'
+    }}>
+      <div style={{
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        width: '100%',
+        maxWidth: '400px',
+        borderRadius: '20px',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        padding: '32px',
+        textAlign: 'right',
+        boxSizing: 'border-box'
+      }}>
         
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-block p-3 bg-indigo-100 rounded-2xl mb-3 shadow-inner">
-            <span className="text-4xl">📚</span>
-          </div>
-          <h1 className="text-3xl font-extrabold text-gray-800 mb-2">
-            منصة <span className="text-indigo-600">لنتعلم</span> التعليمية
+        {/* الهيدر */}
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <div style={{ fontSize: '40px', marginBottom: '8px' }}>📚</div>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e293b', margin: '0 0 8px 0' }}>
+            منصة <span style={{ color: '#4f46e5' }}>لنتعلم</span> التعليمية
           </h1>
-          <p className="text-gray-500 text-sm">أهلاً بك! يرجى تسجيل الدخول للمتابعة</p>
+          <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+            أهلاً بك! يرجى تسجيل الدخول للمتابعة
+          </p>
         </div>
 
-        {/* Status Message */}
+        {/* رسالة التنبيه */}
         {message && (
-          <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 text-indigo-700 text-sm rounded-xl text-center">
+          <div style={{
+            marginBottom: '16px',
+            padding: '12px',
+            backgroundColor: '#eef2ff',
+            border: '1px solid #c7d2fe',
+            color: '#3730a3',
+            fontSize: '14px',
+            borderRadius: '12px',
+            textAlign: 'center'
+          }}>
             {message}
           </div>
         )}
 
-        {/* Form */}
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني</label>
+        {/* النموذج */}
+        <form onSubmit={handleLogin}>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#334155', marginBottom: '6px' }}>
+              البريد الإلكتروني
+            </label>
             <input
               type="email"
               required
               placeholder="kmskms653@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white text-right"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                border: '1px solid #cbd5e1',
+                fontSize: '14px',
+                outline: 'none',
+                boxSizing: 'border-box',
+                textAlign: 'right'
+              }}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">كلمة المرور</label>
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#334155', marginBottom: '6px' }}>
+              كلمة المرور
+            </label>
             <input
               type="password"
               required
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white text-right"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                border: '1px solid #cbd5e1',
+                fontSize: '14px',
+                outline: 'none',
+                boxSizing: 'border-box',
+                textAlign: 'right'
+              }}
             />
           </div>
 
-          <div className="pt-2 space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md transition transform active:scale-95 disabled:opacity-50"
+              style={{
+                width: '100%',
+                padding: '14px',
+                backgroundColor: '#4f46e5',
+                color: '#ffffff',
+                fontWeight: '600',
+                borderRadius: '12px',
+                border: 'none',
+                fontSize: '15px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 6px -1px rgba(79, 70, 229, 0.3)'
+              }}
             >
               {loading ? 'جاري التحميل...' : 'تسجيل الدخول'}
             </button>
             
             <button
               type="button"
-              className="w-full py-3.5 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold rounded-xl border border-gray-200 transition active:scale-95"
+              style={{
+                width: '100%',
+                padding: '14px',
+                backgroundColor: '#f8fafc',
+                color: '#475569',
+                fontWeight: '600',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                fontSize: '15px',
+                cursor: 'pointer'
+              }}
             >
               إنشاء حساب جديد
             </button>
@@ -86,4 +156,5 @@ export default function App() {
     </div>
   );
 }
+
 
