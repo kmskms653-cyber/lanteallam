@@ -1,151 +1,150 @@
 import React, { useState } from 'react';
+import { supabase } from './supabaseClient';
 
 export default function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false);
+  const [user, setUser] = useState(null);
 
-  const handleLogin = (e) => {
+  // تسجيل الدخول
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('جاري تسجيل الدخول...');
-    setTimeout(() => {
-      setLoading(false);
-      setMessage('تم تسجيل الدخول بنجاح! أهلاً بك في منصة لنتعلم.');
-    }, 1200);
+    setMessage('');
+    setIsError(false);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setIsError(true);
+      setMessage(error.message || 'خطأ في البريد الإلكتروني أو كلمة المرور.');
+    } else {
+      setUser(data.user);
+      setMessage('تم تسجيل الدخول بنجاح! أهلاً بك.');
+    }
+    setLoading(false);
   };
 
+  // إنشاء حساب جديد
+  const handleSignUp = async () => {
+    if (!email || !password) {
+      setIsError(true);
+      setMessage('يرجى كتابة البريد الإلكتروني وكلمة المرور أولاً.');
+      return;
+    }
+    setLoading(true);
+    setMessage('');
+    setIsError(false);
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      setIsError(true);
+      setMessage(error.message || 'حدث خطأ أثناء إنشاء الحساب.');
+    } else {
+      setMessage('تم إنشاء الحساب بنجاح! يرجى مراجعة بريدك الإلكتروني للتأكيد (إن كان مفصلاً) أو تسجيل الدخول الآن.');
+    }
+    setLoading(false);
+  };
+
+  // تسجيل الخروج
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setMessage('');
+  };
+
+  if (user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 flex items-center justify-center p-4" dir="rtl">
+        <div className="bg-white/90 backdrop-blur-md w-full max-w-md rounded-2xl shadow-xl p-8 border border-white/60 text-center space-y-4">
+          <div className="text-5xl">🎉</div>
+          <h1 className="text-2xl font-bold text-gray-800">مرحباً بك في منصة لنتعلم!</h1>
+          <p className="text-gray-600 text-sm">{user.email}</p>
+          <button
+            onClick={handleLogout}
+            className="w-full py-3 px-4 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl shadow transition"
+          >
+            تسجيل الخروج
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #e0e7ff 0%, #e0f2fe 50%, #f3e8ff 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      direction: 'rtl'
-    }}>
-      <div style={{
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        width: '100%',
-        maxWidth: '400px',
-        borderRadius: '20px',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-        padding: '32px',
-        textAlign: 'right',
-        boxSizing: 'border-box'
-      }}>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-100 flex items-center justify-center p-4" dir="rtl">
+      <div className="bg-white/90 backdrop-blur-md w-full max-w-md rounded-2xl shadow-xl p-8 border border-white/60 text-right">
         
-        {/* الهيدر */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div style={{ fontSize: '40px', marginBottom: '8px' }}>📚</div>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e293b', margin: '0 0 8px 0' }}>
-            منصة <span style={{ color: '#4f46e5' }}>لنتعلم</span> التعليمية
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-block p-3 bg-indigo-100 rounded-2xl mb-3 shadow-inner">
+            <span className="text-4xl">📚</span>
+          </div>
+          <h1 className="text-3xl font-extrabold text-gray-800 mb-2">
+            منصة <span className="text-indigo-600">لنتعلم</span> التعليمية
           </h1>
-          <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
-            أهلاً بك! يرجى تسجيل الدخول للمتابعة
-          </p>
+          <p className="text-gray-500 text-sm">يرجى تسجيل الدخول أو إنشاء حساب جديد للمتابعة</p>
         </div>
 
-        {/* رسالة التنبيه */}
+        {/* Status Message */}
         {message && (
-          <div style={{
-            marginBottom: '16px',
-            padding: '12px',
-            backgroundColor: '#eef2ff',
-            border: '1px solid #c7d2fe',
-            color: '#3730a3',
-            fontSize: '14px',
-            borderRadius: '12px',
-            textAlign: 'center'
-          }}>
+          <div className={`mb-4 p-3 rounded-xl text-sm text-center border ${
+            isError ? 'bg-red-50 border-red-200 text-red-600' : 'bg-indigo-50 border-indigo-200 text-indigo-700'
+          }`}>
             {message}
           </div>
         )}
 
-        {/* النموذج */}
-        <form onSubmit={handleLogin}>
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#334155', marginBottom: '6px' }}>
-              البريد الإلكتروني
-            </label>
+        {/* Form */}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">البريد الإلكتروني</label>
             <input
               type="email"
               required
-              placeholder="kmskms653@gmail.com"
+              placeholder="example@mail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                border: '1px solid #cbd5e1',
-                fontSize: '14px',
-                outline: 'none',
-                boxSizing: 'border-box',
-                textAlign: 'right'
-              }}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white text-right"
             />
           </div>
 
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#334155', marginBottom: '6px' }}>
-              كلمة المرور
-            </label>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">كلمة المرور</label>
             <input
               type="password"
               required
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '12px',
-                border: '1px solid #cbd5e1',
-                fontSize: '14px',
-                outline: 'none',
-                boxSizing: 'border-box',
-                textAlign: 'right'
-              }}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-indigo-500 outline-none transition bg-white text-right"
             />
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="pt-2 space-y-3">
             <button
               type="submit"
               disabled={loading}
-              style={{
-                width: '100%',
-                padding: '14px',
-                backgroundColor: '#4f46e5',
-                color: '#ffffff',
-                fontWeight: '600',
-                borderRadius: '12px',
-                border: 'none',
-                fontSize: '15px',
-                cursor: 'pointer',
-                boxShadow: '0 4px 6px -1px rgba(79, 70, 229, 0.3)'
-              }}
+              className="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md transition transform active:scale-95 disabled:opacity-50"
             >
               {loading ? 'جاري التحميل...' : 'تسجيل الدخول'}
             </button>
             
             <button
               type="button"
-              style={{
-                width: '100%',
-                padding: '14px',
-                backgroundColor: '#f8fafc',
-                color: '#475569',
-                fontWeight: '600',
-                borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-                fontSize: '15px',
-                cursor: 'pointer'
-              }}
+              onClick={handleSignUp}
+              disabled={loading}
+              className="w-full py-3.5 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold rounded-xl border border-gray-200 transition active:scale-95 disabled:opacity-50"
             >
               إنشاء حساب جديد
             </button>
@@ -156,5 +155,6 @@ export default function App() {
     </div>
   );
 }
+
 
 
