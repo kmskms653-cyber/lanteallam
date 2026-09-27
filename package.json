@@ -7,3 +7,49 @@
     "start": "echo 'Static site ready for Vercel'"
   }
 }
+
+مهمتك تنفيذ وتجهيز نظام محتوى تعليمي شامل داخل التطبيق الحالي، مع الالتزام الصارم بالتعليمات التالية.
+## أولًا: فحص المشروع
+1. افحص بنية المشروع الحالية قبل إجراء أي تعديل.
+2. حدد:
+   - ملف المحتوى التعليمي الرئيسي.
+   - ملف ربط المحتوى بالواجهة.
+   - ملفات الأقسام والوحدات والدروس.
+   - طريقة تخزين الأسئلة والاختبارات.
+   - طريقة عرض الدرس داخل التطبيق.
+3. لا تنشئ ملفات جديدة إذا كان هناك ملف حالي يؤدي نفس الوظيفة.
+4. لا تغيّر التقنية أو البنية العامة للمشروع.
+5. لا تحذف أي محتوى أو وظيفة موجودة حاليًا.
+6. استخدم أسماء الملفات والمسارات الموجودة فعليًا في المشروع، ولا تفترض مسارات غير موجودة.
+## ثانيًا: بنية المحتوى المطلوبة
+أنشئ أو حدّث المحتوى بحيث يكون منظمًا بالشكل التالي:
+```ts
+type Lesson = {
+  id: string;
+  title: string;
+  introduction: string;
+  objectives: string[];
+  shortLessons: {
+    id: string;
+    title: string;
+    explanation: string;
+    examples: string[];
+  }[];
+  activities: {
+    id: string;
+    type: "choice" | "matching" | "ordering" | "writing" | "reading" | "calculation";
+    question: string;
+    options?: string[];
+    correctAnswer?: string | string[];
+    explanation?: string;
+  }[];
+  assessmentQuestions: {
+    id: string;
+    question: string;
+    type: "multiple-choice" | "true-false" | "short-answer";
+    options?: string[];
+    correctAnswer: string | string[];
+    explanation: string;
+  }[];
+  reviewRecommendations: string[];
+};
