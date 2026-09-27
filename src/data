@@ -5,3 +5,88 @@ my-vercel-app/
 │           ├── test_01.json
 │           ├── test_02.json
 │           └── ... (حتى test_30.json)
+import 'package:flutter/material.dart';
+
+class QuizScreen extends StatefulWidget {
+  final List<Map<String, dynamic>> questions;
+
+  const QuizScreen({Key? key, required this.questions}) : super(key: key);
+
+  @override
+  _QuizScreenState createState() => _QuizScreenState();
+}
+
+class _QuizScreenState extends State<QuizScreen> {
+  int currentIndex = 0;
+  int score = 0;
+  int? selectedIndex;
+  bool answered = false;
+
+  void handleAnswer(int index) {
+    if (answered) return;
+    setState(() {
+      selectedIndex = index;
+      answered = true;
+      if (index == widget.questions[currentIndex]['correctIndex']) {
+        score++;
+      }
+    });
+  }
+
+  void nextQuestion() {
+    setState(() {
+      if (currentIndex < widget.questions.length - 1) {
+        currentIndex++;
+        selectedIndex = null;
+        answered = false;
+      } else {
+        // انتقل لشاشة النتائج
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final q = widget.questions[currentIndex];
+    return Scaffold(
+      appBar: AppBar(title: Text('السؤال ${currentIndex + 1} من ${widget.questions.length}')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(q['question'], style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            SizedBox(height: 20),
+            ...List.generate(q['options'].length, (index) {
+              Color btnColor = Colors.white;
+              if (answered) {
+                if (index == q['correctIndex']) {
+                  btnColor = Colors.green.shade100;
+                } else if (index == selectedIndex) {
+                  btnColor = Colors.red.shade100;
+                }
+              }
+              return Container(
+                margin: EdgeInsets.symmetric(vertical: 4),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: btnColor),
+                  onPressed: () => handleAnswer(index),
+                  child: Text(q['options'][index], style: TextStyle(color: Colors.black)),
+                ),
+              );
+            }),
+            if (answered) ...[
+              SizedBox(height: 20),
+              Text("الشرح: ${q['explanation']}", style: TextStyle(color: Colors.grey[700])),
+              Spacer(),
+              ElevatedButton(
+                onPressed: nextQuestion,
+                child: Text('السؤال التالي'),
+              ),
+            ]
+          ],
+        ),
+      ),
+    );
+  }
+}
