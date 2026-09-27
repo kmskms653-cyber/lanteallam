@@ -1,0 +1,7 @@
+my-vercel-app/
+├── src/
+│   └── data/
+│       └── exams/
+│           ├── test_01.json
+│           ├── test_02.json
+│           └── ... (حتى test_30.json)
