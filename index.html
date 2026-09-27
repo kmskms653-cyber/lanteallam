@@ -8,55 +8,166 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts: Cairo -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Google Fonts: Cairo & Tajawal -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; }
-        .icon-btn { cursor: pointer; transition: transform .15s, box-shadow .15s; user-select: none; -webkit-tap-highlight-color: transparent; }
-        .icon-btn:hover { transform: translateY(-3px); }
-        .icon-btn:active { transform: scale(.85); }
-        @keyframes pop { 0% { transform: scale(.6); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
-        .pop { animation: pop .35s cubic-bezier(.34,1.56,.64,1); }
+        :root {
+          --purple: #8b5cf6;
+          --sky: #38bdf8;
+          --pink: #f9a8d4;
+          --gold: #facc15;
+          --navy: #172554;
+        }
+
+        body {
+          direction: rtl;
+          min-height: 100vh;
+          margin: 0;
+          color: #172554;
+          font-family: "Cairo", "Tajawal", sans-serif;
+          background:
+            radial-gradient(circle at 12% 15%, rgba(250, 204, 21, 0.42) 0 8%, transparent 23%),
+            radial-gradient(circle at 85% 12%, rgba(249, 168, 212, 0.5) 0 10%, transparent 27%),
+            radial-gradient(circle at 78% 82%, rgba(56, 189, 248, 0.38) 0 12%, transparent 30%),
+            linear-gradient(135deg, #eef2ff 0%, #fdf2f8 48%, #e0f2fe 100%);
+          overflow-x: hidden;
+          position: relative;
+        }
+
+        body::before,
+        body::after {
+          content: "";
+          position: fixed;
+          z-index: -1;
+          width: 260px;
+          height: 260px;
+          border-radius: 50%;
+          filter: blur(16px);
+          opacity: 0.35;
+          pointer-events: none;
+          animation: floatBubble 9s ease-in-out infinite alternate;
+        }
+
+        body::before {
+          top: 24%;
+          left: -90px;
+          background: var(--purple);
+        }
+
+        body::after {
+          right: -90px;
+          bottom: 12%;
+          background: var(--sky);
+          animation-delay: -3s;
+        }
+
+        .glass-card {
+          background: rgba(255, 255, 255, 0.78);
+          border: 1px solid rgba(255, 255, 255, 0.8);
+          border-radius: 24px;
+          box-shadow: 0 18px 50px rgba(23, 37, 84, 0.12);
+          backdrop-filter: blur(14px);
+          -webkit-backdrop-filter: blur(14px);
+        }
+
+        .magic-icon {
+          display: grid;
+          place-items: center;
+          width: 68px;
+          height: 68px;
+          border-radius: 22px;
+          color: white;
+          box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.45),
+            0 12px 24px rgba(23, 37, 84, 0.18);
+          transition: transform 220ms ease, box-shadow 220ms ease;
+        }
+
+        .magic-icon:hover {
+          transform: translateY(-6px) rotate(-3deg);
+          box-shadow:
+            0 18px 32px rgba(23, 37, 84, 0.22),
+            0 0 24px rgba(250, 204, 21, 0.35);
+        }
+
+        .icon-arabic { background: linear-gradient(135deg, #8b5cf6, #facc15); }
+        .icon-math { background: linear-gradient(135deg, #0ea5e9, #22c55e); }
+        .icon-english { background: linear-gradient(135deg, #ec4899, #38bdf8); }
+        .icon-tests { background: linear-gradient(135deg, #172554, #f97316); }
+
+        .magic-button {
+          border: 0;
+          border-radius: 16px;
+          padding: 13px 22px;
+          color: white;
+          font: inherit;
+          font-weight: 800;
+          cursor: pointer;
+          background: linear-gradient(135deg, var(--purple), #6366f1);
+          box-shadow: 0 9px 18px rgba(99, 102, 241, 0.28);
+          transition: transform 180ms ease, box-shadow 180ms ease;
+        }
+
+        .magic-button:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 14px 24px rgba(99, 102, 241, 0.36);
+        }
+
+        .fade-up { animation: fadeUp 650ms ease both; }
+
+        @keyframes floatBubble {
+          from { transform: translate3d(0, -12px, 0) scale(1); }
+          to { transform: translate3d(24px, 18px, 0) scale(1.08); }
+        }
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(18px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 640px) {
+          .magic-icon { width: 56px; height: 56px; border-radius: 18px; }
+          .glass-card { border-radius: 18px; }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
     <!-- Header Navigation -->
-    <header class="bg-indigo-600 text-white shadow-md">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+    <header class="glass-card m-4 p-4 shadow-md sticky top-4 z-50">
+        <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3 space-x-reverse">
-                <div class="bg-white text-indigo-600 p-2 rounded-xl font-black text-xl shadow">
+                <div class="bg-indigo-600 text-white p-2.5 rounded-2xl font-black text-xl shadow">
                     <i class="fa-solid fa-graduation-cap"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold">منصة لنتعلم</h1>
-                    <p class="text-xs text-indigo-200">التعليم التفاعلي الناطق</p>
+                    <h1 class="text-lg font-black text-navy">منصة لنتعلم</h1>
+                    <p class="text-xs text-indigo-500 font-semibold">التعليم التفاعلي الناطق</p>
                 </div>
             </div>
             <div class="flex items-center space-x-2 space-x-reverse flex-wrap gap-1">
-                <button onclick="go('home')" class="px-3 py-1.5 rounded-lg bg-indigo-700 hover:bg-indigo-800 transition text-sm font-semibold">الرئيسية</button>
-                <button onclick="go('subscribe')" class="px-3 py-1.5 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-slate-900 transition text-sm font-bold"><i class="fa-solid fa-gem ml-1"></i> اشتراك</button>
-                <button onclick="go('admin')" class="px-3 py-1.5 rounded-lg bg-indigo-800 hover:bg-indigo-900 transition text-sm font-semibold"><i class="fa-solid fa-lock ml-1"></i> الإدارة</button>
-                <button onclick="logout()" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 transition text-sm font-semibold">خروج</button>
+                <button onclick="go('home')" class="px-3 py-2 rounded-xl bg-white/80 hover:bg-indigo-50 text-navy transition text-sm font-bold shadow-sm">الرئيسية</button>
+                <button onclick="go('subscribe')" class="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-900 transition text-sm font-black shadow-sm"><i class="fa-solid fa-gem ml-1"></i> اشتراك</button>
+                <button onclick="go('admin')" class="px-3 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition text-sm font-bold shadow-sm"><i class="fa-solid fa-lock ml-1"></i> الإدارة</button>
+                <button onclick="logout()" class="px-3 py-2 rounded-xl bg-rose-500 text-white hover:bg-rose-600 transition text-sm font-bold shadow-sm">خروج</button>
             </div>
         </div>
     </header>
 
     <!-- Main Content Container -->
-    <main class="flex-grow container mx-auto px-4 py-6" id="app-container">
-        <!-- Dynamic Views will load here -->
+    <main class="flex-grow container mx-auto px-4 py-6 max-w-4xl fade-up" id="app-container">
+        <!-- Dynamic Views -->
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-slate-100 py-4 text-center text-xs text-slate-500">
+    <footer class="py-6 text-center text-xs text-slate-500 font-semibold">
         جميع الحقوق محفوظة لصالح منصة لنتعلم &copy; 2026
     </footer>
 
     <!-- JavaScript Application Logic -->
     <script>
-        const DB_KEY = "lntalem_db_v6";
+        const DB_KEY = "lntalem_db_v9";
 
-        // جلب أو إنشاء قاعدة البيانات تلقائياً مع بيانات المشرف والبنك والأسعار
         function loadDB() {
             let db = JSON.parse(localStorage.getItem(DB_KEY) || "null");
             if (!db) {
@@ -87,7 +198,6 @@
             localStorage.setItem(DB_KEY, JSON.stringify(db));
         }
 
-        // التحقق من المستخدم الحالي عبر الجلسة
         function currentUser() {
             const sid = localStorage.getItem("lntalem_session");
             if (!sid) {
@@ -99,7 +209,6 @@
             return loadDB().users.find(u => u.id === sid) || null;
         }
 
-        // التحقق مما إذا كان المستخدم مشرفاً أو مشتركاً فعالاً
         function isSubscribed() {
             const u = currentUser();
             if (!u) return false;
@@ -113,16 +222,12 @@
             location.reload();
         }
 
-        // دالة نسخ الآيبان للحافظة
         function copyIban(ibanText) {
             navigator.clipboard.writeText(ibanText).then(() => {
                 alert("📋 تم نسخ رقم الآيبان بنجاح!");
-            }).catch(err => {
-                console.error('فشل النسخ: ', err);
             });
         }
 
-        // دالة النطق الصوتي التلقائي للأطفال
         function speak(text, lang) {
             if (typeof window === "undefined") return;
             speechSynthesis.cancel();
@@ -133,111 +238,173 @@
             speechSynthesis.speak(u);
         }
 
-        function haptic() {
-            if (navigator.vibrate) navigator.vibrate(30);
-        }
-
-        // نظام التنقل بين الشاشات
         function go(viewName) {
             const app = document.getElementById('app-container');
             if (viewName === 'home') renderHome(app);
             else if (viewName === 'subscribe') renderSubscribe(app);
             else if (viewName === 'admin') renderAdmin(app);
             else if (viewName === 'arabic') renderArabicSection(app);
+            else if (viewName === 'math') renderMathSection(app);
+            else if (viewName === 'english') renderEnglishSection(app);
+            else if (viewName === 'qudrat') renderQudratSection(app);
         }
 
-        // 1. الصفحة الرئيسية
+        // الصفحة الرئيسية
         function renderHome(app) {
             const subscribed = isSubscribed();
             app.innerHTML = `
-                <div class="space-y-6">
-                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row justify-between items-center">
-                        <div class="space-y-2 mb-4 md:mb-0">
-                            <h2 class="text-2xl md:text-3xl font-black">مرحباً بك في منصة لنتعلم التعليمية 🌟</h2>
-                            <p class="text-indigo-100 text-sm md:text-base">استكشف الأقسام التأسيسية الناطقة للأطفال والطلاب.</p>
+                <div class="space-y-6 fade-up">
+                    <div class="glass-card p-6 md:p-8 flex flex-col md:flex-row justify-between items-center text-center md:text-right gap-4">
+                        <div class="space-y-2">
+                            <h2 class="text-2xl md:text-3xl font-black text-navy">مرحباً بك في منصة لنتعلم التعليمية 🌟</h2>
+                            <p class="text-slate-600 text-sm md:text-base">استكشف الأقسام التأسيسية الناطقة للأطفال والطلاب بأسلوب تفاعلي ممتع.</p>
                         </div>
-                        ${!subscribed ? `<button onclick="go('subscribe')" class="bg-yellow-400 hover:bg-yellow-500 text-slate-900 px-5 py-3 rounded-xl font-bold shadow transition">اشترك الآن 💎</button>` : `<div class="bg-emerald-500 text-white px-4 py-2 rounded-xl font-bold text-sm">حساب مشترك ومفعل ✅</div>`}
+                        ${!subscribed ? `<button onclick="go('subscribe')" class="magic-button shrink-0">اشترك الآن 💎</button>` : `<div class="bg-emerald-500 text-white px-5 py-3 rounded-2xl font-bold text-sm shrink-0 shadow-md">حساب مشترك ومفعل ✅</div>`}
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div onclick="go('arabic')" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition cursor-pointer flex flex-col items-center text-center group">
-                            <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
-                                <i class="fa-solid fa-book-open"></i>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- القسم الأول -->
+                        <div onclick="go('arabic')" class="glass-card p-5 hover:scale-[1.02] transition cursor-pointer flex items-center gap-4 group">
+                            <div class="magic-icon icon-arabic text-2xl shrink-0"><i class="fa-solid fa-book-open"></i></div>
+                            <div>
+                                <h3 class="font-bold text-lg text-navy">اللغة العربية والتأسيس</h3>
+                                <p class="text-xs text-slate-500">الحروف، الحركات، القراءة والكتابة للأطفال.</p>
                             </div>
-                            <h3 class="font-bold text-lg text-slate-800 mb-1">اللغة العربية الناطقة</h3>
-                            <p class="text-xs text-slate-500">حروف الهجاء بالصوت التفاعلي.</p>
+                        </div>
+
+                        <!-- القسم الثاني -->
+                        <div onclick="go('math')" class="glass-card p-5 hover:scale-[1.02] transition cursor-pointer flex items-center gap-4 group">
+                            <div class="magic-icon icon-math text-2xl shrink-0"><i class="fa-solid fa-calculator"></i></div>
+                            <div>
+                                <h3 class="font-bold text-lg text-navy">الرياضيات والمسائل</h3>
+                                <p class="text-xs text-slate-500">العمليات الحسابية والمهارات الذهنية.</p>
+                            </div>
+                        </div>
+
+                        <!-- القسم الثالث -->
+                        <div onclick="go('english')" class="glass-card p-5 hover:scale-[1.02] transition cursor-pointer flex items-center gap-4 group">
+                            <div class="magic-icon icon-english text-2xl shrink-0"><i class="fa-solid fa-globe"></i></div>
+                            <div>
+                                <h3 class="font-bold text-lg text-navy">اللغة الإنجليزية</h3>
+                                <p class="text-xs text-slate-500">تعلم الكلمات، القواعد الأساسية والمحادثة.</p>
+                            </div>
+                        </div>
+
+                        <!-- القسم الرابع -->
+                        <div onclick="go('qudrat')" class="glass-card p-5 hover:scale-[1.02] transition cursor-pointer flex items-center gap-4 group">
+                            <div class="magic-icon icon-tests text-2xl shrink-0"><i class="fa-solid fa-award"></i></div>
+                            <div>
+                                <h3 class="font-bold text-lg text-navy">القدرات والتحصيلي</h3>
+                                <p class="text-xs text-slate-500">تدريبات واختبارات تجريبية شاملة.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
         }
 
-        // 2. قسم الحروف العربية الناطقة
+        // الحروف العربية
         function renderArabicSection(app) {
             const letters = "أبتثجحخدذرزسشصضطظعغفقكلمنهوي".split("");
             let html = `
-                <div class="space-y-4">
-                    <button onclick="go('home')" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800"><i class="fa-solid fa-arrow-right ml-1"></i> العودة</button>
-                    <h2 class="text-2xl font-bold text-slate-800 text-center">أبجديات اللغة العربية الناطقة 🗣️</h2>
-                    <p class="text-center text-slate-500 text-sm mb-6">انقر على أي حرف لسماع نطقه الصحيح ببطء!</p>
+                <div class="space-y-4 fade-up">
+                    <button onclick="go('home')" class="text-sm font-bold text-indigo-600 hover:text-indigo-800"><i class="fa-solid fa-arrow-right ml-1"></i> العودة للرئيسية</button>
+                    <div class="glass-card p-6 text-center space-y-2">
+                        <h2 class="text-2xl font-black text-navy">أبجديات اللغة العربية الناطقة 🗣️</h2>
+                        <p class="text-slate-500 text-sm">انقر على أي حرف لسماع نطقه الصحيح!</p>
+                    </div>
                     <div class="flex flex-wrap justify-center gap-3">
             `;
-            letters.forEach((l, i) => {
-                const bg = i % 2 === 0 ? "from-emerald-400 to-emerald-600" : "from-teal-400 to-teal-600";
-                html += `<button onclick="speak('${l}'); haptic(); this.classList.remove('pop'); void this.offsetWidth; this.classList.add('pop');" class="icon-btn bg-gradient-to-br ${bg} text-white font-black rounded-2xl shadow-lg w-16 h-16 text-2xl flex items-center justify-center">${l}</button>`;
+            letters.forEach((l) => {
+                html += `<button onclick="speak('${l}')" class="magic-icon icon-arabic font-black text-2xl cursor-pointer">${l}</button>`;
             });
             html += `</div></div>`;
             app.innerHTML = html;
         }
 
-        // 3. صفحة الاشتراك مع الآيبان المنسوخ وإيصال التحويل
+        // الرياضيات
+        function renderMathSection(app) {
+            app.innerHTML = `
+                <div class="space-y-4 fade-up">
+                    <button onclick="go('home')" class="text-sm font-bold text-indigo-600"><i class="fa-solid fa-arrow-right ml-1"></i> العودة للرئيسية</button>
+                    <div class="glass-card p-6 text-center space-y-4">
+                        <h2 class="text-2xl font-black text-navy">الرياضيات والمهارات الذهنية 🔢</h2>
+                        <p class="text-slate-600 text-sm">تدرب على العمليات والأرقام التفاعلية:</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <button onclick="speak('واحد زائد واحد يساوي اثنان')" class="bg-white/90 border border-emerald-200 text-emerald-800 font-bold p-4 rounded-2xl shadow-sm hover:bg-emerald-50 transition">1 + 1 = 2</button>
+                            <button onclick="speak('اثنان ضرب اثنان يساوي أربعة')" class="bg-white/90 border border-emerald-200 text-emerald-800 font-bold p-4 rounded-2xl shadow-sm hover:bg-emerald-50 transition">2 × 2 = 4</button>
+                            <button onclick="speak('خمسة ضرب خمسة يساوي خمسة وعشرين')" class="bg-white/90 border border-emerald-200 text-emerald-800 font-bold p-4 rounded-2xl shadow-sm hover:bg-emerald-50 transition">5 × 5 = 25</button>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        // الإنجليزية
+        function renderEnglishSection(app) {
+            const words = [{en: "Apple", ar: "تفاحة"}, {en: "Cat", ar: "قطة"}, {en: "School", ar: "مدرسة"}, {en: "Book", ar: "كتاب"}];
+            app.innerHTML = `
+                <div class="space-y-4 fade-up">
+                    <button onclick="go('home')" class="text-sm font-bold text-indigo-600"><i class="fa-solid fa-arrow-right ml-1"></i> العودة للرئيسية</button>
+                    <div class="glass-card p-6 text-center">
+                        <h2 class="text-2xl font-black text-navy mb-2">اللغة الإنجليزية الناطقة 🔤</h2>
+                        <p class="text-slate-500 text-sm mb-6">انقر على الكلمة للاستماع إلى نطقها الصحيح بالإنجليزية</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            ${words.map(w => `
+                                <div onclick="speak('${w.en}', 'en-US')" class="bg-white/90 rounded-2xl shadow-sm p-5 text-center cursor-pointer hover:bg-pink-50 transition border border-pink-100">
+                                    <p class="text-2xl font-black text-pink-600 mb-1">${w.en}</p>
+                                    <p class="text-sm text-slate-500">${w.ar}</p>
+                                </div>
+                            `).join("")}
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        // القدرات والتحصيلي
+        function renderQudratSection(app) {
+            app.innerHTML = `
+                <div class="space-y-4 fade-up">
+                    <button onclick="go('home')" class="text-sm font-bold text-indigo-600"><i class="fa-solid fa-arrow-right ml-1"></i> العودة للرئيسية</button>
+                    <div class="glass-card p-6 space-y-4 text-center">
+                        <h2 class="text-2xl font-black text-navy">اختبارات القدرات والتحصيلي 🎓</h2>
+                        <p class="text-slate-600 text-sm">اختر القسم لبدء التدريب التجريبي:</p>
+                        <div class="flex flex-col gap-3">
+                            <button onclick="alert('جاري تجهيز بنك أسئلة القدرات الكمي واللفظي...')" class="magic-button">تدريبات القدرات العامة (كمي / لفظي)</button>
+                            <button onclick="alert('جاري تجهيز بنك أسئلة التحصيلي للمواد العلمية...')" class="magic-button" style="background: linear-gradient(135deg, #172554, #3b82f6);">تدريبات التحصيلي (رياضيات، كيمياء، أحياء، فيزياء)</button>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        // الاشتراك
         function renderSubscribe(app) {
             const u = currentUser();
             if (!u) return go('home');
-            
-            const db = loadDB();
-            const s = db.settings;
-            
+            const s = loadDB().settings;
             app.innerHTML = `
-                <div class="max-w-xl mx-auto p-4">
-                    <button onclick="go('home')" class="mb-4 text-sm font-semibold text-indigo-600"><i class="fa-solid fa-arrow-right ml-1"></i> العودة</button>
-                    <h1 class="text-3xl font-bold text-center mb-6">اشتراك المنصة 💎</h1>
-                    
-                    <!-- تفاصيل الحساب والآيبان مع زر النسخ -->
-                    <div class="bg-white rounded-2xl shadow p-6 mb-6 space-y-3">
+                <div class="max-w-xl mx-auto space-y-4 fade-up">
+                    <button onclick="go('home')" class="text-sm font-bold text-indigo-600"><i class="fa-solid fa-arrow-right ml-1"></i> العودة</button>
+                    <h1 class="text-3xl font-black text-center text-navy mb-2">اشتراك المنصة 💎</h1>
+                    <div class="glass-card p-6 space-y-3">
                         <h2 class="font-bold text-lg text-emerald-800 border-b pb-2">📋 بيانات التحويل البنكي:</h2>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-500">البنك:</span>
-                            <span class="font-bold text-gray-800">${s.bankName || 'Urpay'}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-500">اسم الحساب:</span>
-                            <span class="font-bold text-gray-800">${s.accountName || 'خالد العتيبي'}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-500">الأسعار:</span>
-                            <span class="font-bold text-emerald-600">${s.price}</span>
-                        </div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-500">البنك:</span><span class="font-bold text-navy">${s.bankName}</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-500">اسم الحساب:</span><span class="font-bold text-navy">${s.accountName}</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-500">الأسعار:</span><span class="font-bold text-emerald-600">${s.price}</span></div>
                         <div>
-                            <span class="text-sm text-gray-500 block mb-1">رقم الآيبان (IBAN):</span>
+                            <span class="text-sm text-slate-500 block mb-1">رقم الآيبان (IBAN):</span>
                             <div class="flex items-center gap-2">
-                                <input type="text" readonly id="iban-input" value="${s.iban}" class="w-full bg-gray-100 border rounded-xl p-2.5 font-mono text-center text-sm font-bold text-emerald-700 select-all" />
-                                <button onclick="copyIban('${s.iban}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-1 shrink-0" title="نسخ الآيبان">
-                                    <i class="fa-regular fa-copy"></i> نسخ
-                                </button>
+                                <input type="text" readonly value="${s.iban}" class="w-full bg-white border rounded-xl p-2.5 font-mono text-center text-sm font-bold text-emerald-700 select-all shadow-sm" />
+                                <button onclick="copyIban('${s.iban}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition shrink-0 shadow"><i class="fa-regular fa-copy"></i> نسخ</button>
                             </div>
                         </div>
                     </div>
-
-                    <!-- رفع إيصال التحويل وحالة الاشتراك المعلقة -->
-                    <div class="bg-white rounded-2xl shadow p-6 space-y-4">
-                        <h2 class="font-bold text-sm text-gray-700">تأكيد عملية الدفع:</h2>
-                        <label class="block border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-emerald-500 transition">
+                    <div class="glass-card p-6 space-y-4">
+                        <h2 class="font-bold text-sm text-navy">تأكيد عملية الدفع:</h2>
+                        <label class="block border-2 border-dashed border-indigo-200 rounded-2xl p-6 text-center cursor-pointer hover:border-emerald-500 transition bg-white/50">
                             <input type="file" accept="image/*" class="hidden" onchange="pickReceipt(this)">
-                            <span id="rc-label" class="font-bold text-gray-600 text-sm"><i class="fa-solid fa-cloud-arrow-up text-xl block mb-1 text-emerald-600"></i> ارفع صورة إيصال التحويل البنكي هنا</span>
+                            <span id="rc-label" class="font-bold text-slate-600 text-sm"><i class="fa-solid fa-cloud-arrow-up text-2xl block mb-2 text-emerald-600"></i> ارفع صورة إيصال التحويل البنكي هنا</span>
                         </label>
-                        <p class="text-xs text-amber-600 text-center font-semibold">⚠️ حالة الاشتراك الافتراضية بعد الإرسال ستكون (معلق) لحين مراجعتها من قِبل المشرف وتفعيلها.</p>
-                        <button onclick="submitSub()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition shadow">إرسال إيصال الدفع وطلب التفعيل</button>
+                        <button onclick="submitSub()" class="w-full magic-button py-3.5 shadow-lg">إرسال إيصال الدفع وطلب التفعيل</button>
                     </div>
                 </div>`;
         }
@@ -250,135 +417,76 @@
             r.onload = e => {
                 receiptData = e.target.result;
                 const label = document.getElementById("rc-label");
-                if (label) {
-                    label.innerHTML = `<span class="text-emerald-700 font-bold">✅ تم إرفاق الملف: ${f.name}</span>`;
-                }
+                if (label) label.innerHTML = `<span class="text-emerald-700 font-bold">✅ تم إرفاق الملف: ${f.name}</span>`;
             };
             r.readAsDataURL(f);
         }
 
         function submitSub() {
-            if (!receiptData) return alert("يرجى إرفاق صورة إيصال التحويل أولاً قبل الإرسال");
-            const db = loadDB();
-            const u = currentUser();
-            
-            db.subs.push({
-                id: "s" + Date.now(),
-                userId: u.id,
-                email: u.email,
-                receipt: receiptData,
-                status: "pending",
-                date: new Date().toLocaleDateString("ar-SA")
-            });
-            
+            if (!receiptData) return alert("يرجى إرفاق صورة إيصال التحويل أولاً");
+            const db = loadDB(), u = currentUser();
+            db.subs.push({ id: "s" + Date.now(), userId: u.id, email: u.email, receipt: receiptData, status: "pending", date: new Date().toLocaleDateString("ar-SA") });
             const targetUser = db.users.find(x => x.id === u.id);
             if(targetUser) targetUser.status = "pending";
-
             saveDB(db);
             receiptData = null;
-            alert("تم إرسال طلب الاشتراك بنجاح وحالته الآن (معلق)، بانتظار مراجعته من المشرف.");
+            alert("تم إرسال طلب الاشتراك بنجاح وهو الآن (معلق) بانتظار تفعيل المشرف.");
             go("home");
         }
 
-        // 4. لوحة تحكم المشرف الرئيسية
+        // لوحة المشرف المحمية والمقفلة حصرياً
         function renderAdmin(app) {
             const u = currentUser();
+            
+            // قفل تام وحماية صارمة: منع أي مستخدم غير مشرف من الدخول
             if (!u || (!u.is_admin && u.email.toLowerCase() !== "kmskms653@gmail.com")) {
-                alert("صفحة خاصة بالمشرف فقط");
+                alert("⛔ عذراً، هذه الصفحة خاصة بالمشرف فقط ولا يمكن الوصول إليها.");
                 return go("home");
             }
-            
-            const db = loadDB();
-            const pending = db.subs.filter(s => s.status === "pending");
-            const users = db.users;
 
+            const db = loadDB(), pending = db.subs.filter(s => s.status === "pending");
             app.innerHTML = `
-                <div class="max-w-3xl mx-auto p-4">
-                    <button onclick="go('home')" class="mb-4 text-sm font-semibold text-indigo-600"><i class="fa-solid fa-arrow-right ml-1"></i> العودة</button>
-                    <h1 class="text-3xl font-bold mb-6 flex items-center gap-2">🛠️ لوحة تحكم المشرف</h1>
-                    <div class="flex gap-2 mb-6 border-b pb-3 overflow-x-auto">
-                        <button onclick="adminTab('subs')" id="btn-subs" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-sm">الاشتراكات المعلقة (${pending.length})</button>
-                        <button onclick="adminTab('users')" id="btn-users" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold text-sm">المستخدمون (${users.length})</button>
-                        <button onclick="adminTab('settings')" id="btn-settings" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold text-sm">إعدادات البنك والأسعار</button>
+                <div class="max-w-3xl mx-auto space-y-4 fade-up">
+                    <button onclick="go('home')" class="text-sm font-bold text-indigo-600"><i class="fa-solid fa-arrow-right ml-1"></i> العودة</button>
+                    <h1 class="text-3xl font-black text-navy mb-6">🛠️ لوحة تحكم المشرف</h1>
+                    <div class="flex gap-2 mb-6 border-b border-indigo-100 pb-3 overflow-x-auto">
+                        <button onclick="adminTab('subs')" id="btn-subs" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow">الاشتراكات المعلقة (${pending.length})</button>
+                        <button onclick="adminTab('users')" id="btn-users" class="bg-white/80 text-navy px-4 py-2 rounded-xl font-bold text-sm shadow-sm">المستخدمون (${db.users.length})</button>
+                        <button onclick="adminTab('settings')" id="btn-settings" class="bg-white/80 text-navy px-4 py-2 rounded-xl font-bold text-sm shadow-sm">إعدادات البنك والأسعار</button>
                     </div>
                     <div id="admin-content"></div>
                 </div>`;
             adminTab('subs');
         }
 
-        // إدارة التبويبات داخل لوحة المشرف
         function adminTab(tab) {
             ['subs', 'users', 'settings'].forEach(t => {
                 const btn = document.getElementById("btn-" + t);
-                if (btn) {
-                    btn.className = (t === tab) 
-                        ? "bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-sm" 
-                        : "bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold text-sm";
-                }
+                if (btn) btn.className = (t === tab) ? "bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow" : "bg-white/80 text-navy px-4 py-2 rounded-xl font-bold text-sm shadow-sm";
             });
-            
-            const box = document.getElementById("admin-content");
-            if (!box) return;
-            const db = loadDB();
-
+            const box = document.getElementById("admin-content"), db = loadDB();
             if (tab === "subs") {
                 const pending = db.subs.filter(s => s.status === "pending");
-                if (pending.length === 0) {
-                    box.innerHTML = `<p class="text-gray-500 bg-white p-6 rounded-2xl text-center shadow">لا توجد طلبات اشتراك معلقة حالياً.</p>`;
-                    return;
-                }
-                box.innerHTML = `<div class="space-y-4">${pending.map(s => `
-                    <div class="bg-white rounded-2xl shadow p-4 flex items-center justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                            <img src="${s.receipt}" class="w-16 h-16 object-cover rounded-xl cursor-pointer border" onclick="window.open('${s.receipt}')" title="اضغط لمشاهدة الإيصال بالحجم الكامل">
-                            <div>
-                                <p class="font-bold">${s.email}</p>
-                                <p class="text-xs text-gray-400">${s.date}</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="decide('${s.id}', true)" class="bg-green-600 text-white px-4 py-2 rounded-xl font-bold text-sm">موافقة</button>
-                            <button onclick="decide('${s.id}', false)" class="bg-red-600 text-white px-4 py-2 rounded-xl font-bold text-sm">رفض</button>
-                        </div>
+                box.innerHTML = pending.length === 0 ? `<p class="text-slate-500 glass-card p-6 text-center">لا توجد طلبات معلقة.</p>` :
+                    `<div class="space-y-4">${pending.map(s => `<div class="glass-card p-4 flex items-center justify-between gap-4">
+                        <div class="flex items-center gap-3"><img src="${s.receipt}" class="w-16 h-16 object-cover rounded-xl border cursor-pointer shadow-sm" onclick="window.open('${s.receipt}')"><div><p class="font-bold text-navy">${s.email}</p><p class="text-xs text-slate-400">${s.date}</p></div></div>
+                        <div class="flex gap-2"><button onclick="decide('${s.id}', true)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold text-sm shadow">موافقة</button><button onclick="decide('${s.id}', false)" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl font-bold text-sm shadow">رفض</button></div>
                     </div>`).join("")}</div>`;
-                    
             } else if (tab === "users") {
-                box.innerHTML = `<div class="bg-white rounded-2xl shadow p-6 space-y-3">${db.users.map(us => `
-                    <div class="flex items-center justify-between border-b pb-3 text-sm">
-                        <div>
-                            <p class="font-bold">${us.email}</p>
-                            <p class="text-xs text-gray-500">الحالة: ${us.status}${us.is_admin ? '| مشرف 👑' : ''}</p>
-                        </div>
-                        ${us.email.toLowerCase() !== "kmskms653@gmail.com" ? `<button onclick="deleteUser('${us.id}')" class="text-red-500 hover:underline font-bold">حذف</button>` : ""}
-                    </div>`).join("")}</div>`;
-                    
+                box.innerHTML = `<div class="glass-card p-6 space-y-3">${db.users.map(us => `<div class="flex items-center justify-between border-b border-slate-100 pb-3 text-sm"><div><p class="font-bold text-navy">${us.email}</p><p class="text-xs text-slate-500">الحالة: ${us.status}</p></div>${us.email.toLowerCase() !== "kmskms653@gmail.com" ? `<button onclick="deleteUser('${us.id}')" class="text-rose-500 font-bold hover:underline">حذف</button>` : ""}</div>`).join("")}</div>`;
             } else if (tab === "settings") {
-                box.innerHTML = `<div class="bg-white rounded-2xl shadow p-6 space-y-4">
-                    <div>
-                        <label class="block font-bold text-sm mb-1">اسم البنك:</label>
-                        <input id="st-bank" type="text" value="${db.settings.bankName}" class="w-full border rounded-xl p-3">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-sm mb-1">اسم الحساب / المستفيد:</label>
-                        <input id="st-acc" type="text" value="${db.settings.accountName}" class="w-full border rounded-xl p-3">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-sm mb-1">رقم الآيبان (IBAN):</label>
-                        <input id="st-iban" type="text" value="${db.settings.iban}" class="w-full border rounded-xl p-3 font-mono">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-sm mb-1">أسعار الاشتراك:</label>
-                        <input id="st-price" type="text" value="${db.settings.price}" class="w-full border rounded-xl p-3">
-                    </div>
-                    <button onclick="saveSettings()" class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700">حفظ الإعدادات</button>
+                box.innerHTML = `<div class="glass-card p-6 space-y-4">
+                    <div><label class="block font-bold text-sm text-navy mb-1">اسم البنك:</label><input id="st-bank" type="text" value="${db.settings.bankName}" class="w-full bg-white border rounded-xl p-3 shadow-sm"></div>
+                    <div><label class="block font-bold text-sm text-navy mb-1">اسم الحساب:</label><input id="st-acc" type="text" value="${db.settings.accountName}" class="w-full bg-white border rounded-xl p-3 shadow-sm"></div>
+                    <div><label class="block font-bold text-sm text-navy mb-1">رقم الآيبان:</label><input id="st-iban" type="text" value="${db.settings.iban}" class="w-full bg-white border rounded-xl p-3 font-mono shadow-sm"></div>
+                    <div><label class="block font-bold text-sm text-navy mb-1">الأسعار:</label><input id="st-price" type="text" value="${db.settings.price}" class="w-full bg-white border rounded-xl p-3 shadow-sm"></div>
+                    <button onclick="saveSettings()" class="magic-button px-6 py-3">حفظ الإعدادات</button>
                 </div>`;
             }
         }
 
-        // اتخاذ قرار قبول أو رفض الإيصال
         function decide(sid, ok) {
-            const db = loadDB();
-            const s = db.subs.find(x => x.id === sid);
+            const db = loadDB(), s = db.subs.find(x => x.id === sid);
             if (!s) return;
             s.status = ok ? "active" : "rejected";
             const usr = db.users.find(x => x.id === s.userId);
@@ -387,16 +495,14 @@
             adminTab('subs');
         }
 
-        // حذف مستخدم
         function deleteUser(uid) {
-            if (!confirm("هل أنت متأكد من حذف هذا المستخدم؟")) return;
+            if (!confirm("هل أنت متأكد من الحذف؟")) return;
             const db = loadDB();
             db.users = db.users.filter(x => x.id !== uid);
             saveDB(db);
             adminTab('users');
         }
 
-        // حفظ إعدادات البنك والأسعار ديناميكياً
         function saveSettings() {
             const db = loadDB();
             db.settings.bankName = document.getElementById("st-bank").value;
@@ -404,15 +510,10 @@
             db.settings.iban = document.getElementById("st-iban").value;
             db.settings.price = document.getElementById("st-price").value;
             saveDB(db);
-            alert("✅ تم حفظ الإعدادات وتحديثها في صفحة الاشتراك فوراً");
+            alert("✅ تم حفظ الإعدادات بنجاح");
         }
 
-        // التشغيل التلقائي عند فتح التطبيق
-        window.onload = () => {
-            loadDB();
-            go('home');
-        };
+        window.onload = () => { loadDB(); go('home'); };
     </script>
 </body>
 </html>
-
