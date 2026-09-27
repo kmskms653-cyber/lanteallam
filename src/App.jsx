@@ -48,4 +48,34 @@ export default function App() {
     </div>
   );
 }
+import React, { useState } from 'react';
+import { tahsiliTest01 } from './examsData';
+
+export default function App() {
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const question = tahsiliTest01.questions[currentQuestionIndex];
+
+  return (
+    <div style={{ padding: '20px', fontFamily: 'Cairo, sans-serif', direction: 'rtl' }}>
+      <h1>{tahsiliTest01.title}</h1>
+      <h3>السؤال {question.id}: {question.question_text}</h3>
+      
+      <ul>
+        {question.options.map((option, index) => (
+          <li key={index} style={{ margin: '10px 0' }}>
+            <button onClick={() => {
+              if (index === question.correct_answer_index) {
+                alert("إجابة صحيحة! " + question.explanation);
+              } else {
+                alert("إجابة خاطئة. حاول مرة أخرى.");
+              }
+            }}>
+              {option}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
