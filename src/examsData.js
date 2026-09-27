@@ -78,3 +78,37 @@ async function getExamData(examId: string) {
     }
   ]
 }
+// نموذج قائمة اختبارات القدرات والتحصيلي المعمارية
+class TestListScreen extends StatelessWidget {
+  final List<Map<String, dynamic>> availableTests = [
+    {"testId": "t1", "title": "اختبار تحصيلي (1) - عام", "questionsCount": 30},
+    {"testId": "t2", "title": "اختبار قدرات (1) - كمي", "questionsCount": 25},
+    {"testId": "t3", "title": "اختبار قدرات (2) - لفظي", "questionsCount": 25},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('اختبارات القدرات والتحصيلي')),
+      body: ListView.builder(
+        itemCount: availableTests.length,
+        itemBuilder: (context, index) {
+          final test = availableTests[index];
+          return Card(
+            margin: EdgeInsets.all(8),
+            child: ListTile(
+              title: Text(test['title']),
+              subtitle: Text('عدد الأسئلة: ${test['questionsCount']}'),
+              trailing: ElevatedButton(
+                onPressed: () {
+                  // بدء الاختبار وتمرير بيانات الاختبار المحدد
+                },
+                child: Text('ابدأ الاختبار'),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
