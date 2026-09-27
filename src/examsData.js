@@ -48,3 +48,12 @@ export const tahsiliTest01 = {
     }
   ]
 };
+import fs from 'fs';
+import path from 'path';
+
+// دالة لجلب تفاصيل الاختبار بناءً على معرفه
+async function getExamData(examId: string) {
+  const filePath = path.join(process.cwd(), 'src/data/exams', `${examId}.json`);
+  const fileData = fs.readFileSync(filePath, 'utf8');
+  return JSON.parse(fileData);
+}
