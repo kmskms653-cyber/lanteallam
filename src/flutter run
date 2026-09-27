@@ -6,3 +6,30 @@ cd quiz_app
 
 # تشغيل التطبيق على المحاكي
 flutter run
+void navigateToSection(BuildContext context, bool isSubscribed, String sectionName) {
+  if (!isSubscribed) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('عضوية مدفوعة مطلوبة'),
+        content: Text('هذا القسم خاص بالمشتركين فقط. يرجى الاشتراك للوصول إلى المحتوى التعليمي.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // الانتقال لصفحة الدفع أو الاشتراكات
+            },
+            child: Text('اشتراك الآن'),
+          ),
+        ],
+      ),
+    );
+  } else {
+    // الانتقال للقسم التعليمي المطلوب
+    // Navigator.push(...);
+  }
+}
