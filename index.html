@@ -1,356 +1,196 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>منصة لنتعلم التعليمية</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="manifest" href='data:application/manifest+json,{"name":"لنتعلم","short_name":"لنتعلم","display":"standalone","dir":"rtl","lang":"ar","theme_color":"#059669","background_color":"#059669"}'>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
-body{font-family:'Tajawal',Tahoma,sans-serif;overflow-x:hidden}
-.bg-scene{position:fixed;inset:0;z-index:-1;background:linear-gradient(135deg,#ecfdf5,#eff6ff,#fdf4ff,#fff7ed);background-size:300% 300%;animation:bgShift 14s ease infinite}
-@keyframes bgShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-.blob{position:fixed;border-radius:50%;filter:blur(70px);opacity:.45;z-index:-1;animation:float 12s ease-in-out infinite}
-@keyframes float{0%,100%{transform:translateY(0) translateX(0)}33%{transform:translateY(-35px) translateX(20px)}66%{transform:translateY(20px) translateX(-25px)}}
-nav{backdrop-filter:blur(14px);background:rgba(5,150,105,.85)!important}
-.stage-card{position:relative;overflow:hidden;border-radius:1.75rem;text-align:right;transition:transform .25s,box-shadow .25s;box-shadow:0 8px 24px rgba(0,0,0,.12)}
-.stage-card::before{content:'';position:absolute;top:-40%;left:-20%;width:70%;height:120%;background:radial-gradient(circle,rgba(255,255,255,.28),transparent 65%)}
-.stage-card::after{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.14) 1.5px,transparent 1.5px);background-size:22px 22px;pointer-events:none}
-.stage-card:hover{transform:translateY(-8px) scale(1.02);box-shadow:0 18px 45px rgba(0,0,0,.22)}
-.stage-emoji{display:inline-flex;align-items:center;justify-content:center;width:84px;height:84px;border-radius:1.4rem;background:rgba(255,255,255,.22);backdrop-filter:blur(6px);font-size:2.9rem;box-shadow:inset 0 0 0 2px rgba(255,255,255,.35),0 8px 18px rgba(0,0,0,.15);transition:transform .25s}
-.stage-card:hover .stage-emoji{transform:rotate(-8deg) scale(1.12)}
-.grade-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:.9rem;background:linear-gradient(135deg,#d1fae5,#a7f3d0);font-size:1.4rem;box-shadow:0 3px 8px rgba(5,150,105,.2)}
-.letter-tile{transition:transform .15s,box-shadow .15s;border:none;cursor:pointer}
-.letter-tile:hover{box-shadow:0 12px 28px rgba(5,150,105,.3)}
-.letter-tile:active{transform:scale(.88)}
-.big-letter{background:linear-gradient(145deg,#34d399,#059669);color:#fff;text-shadow:0 3px 8px rgba(0,0,0,.25);box-shadow:0 12px 30px rgba(5,150,105,.4)}
-.big-number{background:linear-gradient(145deg,#60a5fa,#2563eb);color:#fff;text-shadow:0 3px 8px rgba(0,0,0,.25);box-shadow:0 12px 30px rgba(37,99,235,.4)}
-.btn-glow{box-shadow:0 8px 22px rgba(5,150,105,.35);transition:transform .15s,box-shadow .15s}
-.btn-glow:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(5,150,105,.45)}
-.trace-box{border:2px dashed #059669;border-radius:1rem;background:repeating-linear-gradient(transparent,transparent 38px,#d1fae5 38px,#d1fae5 40px)}
-@keyframes pop{0%{transform:scale(.8);opacity:0}100%{transform:scale(1);opacity:1}}
-.pop{animation:pop .35s cubic-bezier(.34,1.56,.64,1)}
-@keyframes bounceSlow{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.bounce-slow{animation:bounceSlow 2.2s ease-in-out infinite}
-.confetti{position:fixed;top:-12px;font-size:22px;z-index:99;animation:fall linear forwards;pointer-events:none}
-@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:.9}}
-.logo-badge{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:.8rem;background:rgba(255,255,255,.2);box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة لنتعلم - التعليمية الشاملة</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; }
+    </style>
+    <!-- Manifest for PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
 </head>
-<body class="min-h-screen">
-<div class="bg-scene"></div>
-<div class="blob" style="width:340px;height:340px;background:#6ee7b7;top:-80px;right:-80px"></div>
-<div class="blob" style="width:280px;height:280px;background:#93c5fd;bottom:-60px;left:-60px;animation-delay:-4s"></div>
-<div class="blob" style="width:220px;height:220px;background:#fbbf24;top:40%;left:10%;animation-delay:-8s;opacity:.3"></div>
-<nav class="bg-emerald-700 text-white p-4 shadow-lg sticky top-0 z-40">
-<div class="max-w-4xl mx-auto flex items-center justify-between">
-<button onclick="go('home')" class="text-2xl font-bold flex items-center gap-2"><span class="logo-badge bounce-slow">📚</span> منصة <span class="text-amber-300">لنتعلم</span></button>
-<div id="nav-user" class="flex items-center gap-3"></div>
-</div>
-</nav>
-<main id="app" class="max-w-4xl mx-auto p-4 pb-16"></main>
-<div id="paywall" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-<div class="bg-white rounded-2xl p-8 max-w-md w-full text-center pop">
-<div class="text-6xl mb-4">🔒</div>
-<h2 class="text-2xl font-bold mb-2">هذا المحتوى للمشتركين فقط</h2>
-<p class="text-gray-600 mb-6">اشترك الآن وافتح جميع الدروس والاختبارات التفاعلية</p>
-<button onclick="closePaywall();go('subscribe')" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold text-lg hover:bg-emerald-700">عرض خطط الاشتراك</button>
-<button onclick="closePaywall()" class="mt-3 text-gray-500 text-sm underline">إغلاق</button>
-</div>
-</div>
-<script>
-const DB_KEY = "lntalem_db_v1";
-function genQuestions(kind, n, offset){
-const qs = [];
-for(let i=0;i<n;i++){
-if(kind==="قدرات"){
-const a=2+(i%8), b=3+((i*2)%7);
-qs.push({q:⁠ما ناتج: ${a} + ${b} = ؟⁠,options:[String(a+b),String(a+b+1),String(a+b-1),String(a+b+2)],correct:0,
-explanation:⁠نجمع العددين مباشرة: ${a} + ${b} = ${a+b}.⁠});
-} else {
-const words=["الشمس","القمر","النجم","الماء","الهواء"];
-const w=words[i%words.length];
-qs.push({q:⁠اختر الكلمة المكتوبة إملاءً صحيحاً:⁠,options:[w,w+"ة","ال"+w+"ات",w+"ـن"],correct:0,
-explanation:⁠الكلمة "${w}" تُكتب هكذا حسب القواعد الإملائية الصحيحة.⁠});
-}
-}
-return qs;
-}
-const abilityTests = Array.from({length:30},(,i)=>({id:"ab"+i,cat:"قدرات",title:"اختبار القدرات "+(i+1),questions:genQuestions("قدرات",20,i)}));
-const achievementTests = Array.from({length:30},(,i)=>({id:"ac"+i,cat:"تحصيلي",title:"اختبار التحصيلي "+(i+1),questions:genQuestions("تحصيلي",20,i)}));
-const AR_LETTERS = "أبتثجحخدذرزسشصضطظعغفقكلمنهوي".split("");
-const AR_WORDS = ["باب","نار","دار","قمر","قلم","بيت","نور","ولد"];
-const EN_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-const CONTENT = [
-{id:"s1",emoji:"🔤",color:"bg-rose-500",title:"تأسيس الحروف العربية",sub:"قراءة وكتابة",
-grades:[
-{id:"g11",title:"الحروف الهجائية",icon:"🔤",
-lessons:AR_LETTERS.map((L,i)=>({id:"l11"+i,title:"الحرف "+L,audio:L,body:"letter",data:L}))},
-{id:"g12",title:"قراءة الكلمات",icon:"📖",
-lessons:[{id:"l121",title:"كلمات من ثلاثة أحرف",audio:"باب. نار. دار. قمر",body:"text",
-data:"انقر على أي كلمة لسماع نطقها:\n"+AR_WORDS.map(w=>⁠<button onclick="speak('${w}')" class="m-1 bg-emerald-100 hover:bg-emerald-200 px-4 py-2 rounded-xl text-xl font-bold">${w} 🔊</button>⁠).join("")}]},
-{id:"g13",title:"كتابة الكلمات",icon:"✍️",
-lessons:[{id:"l131",title:"تتبّع الكتابة",body:"trace",data:AR_WORDS.join(" · ")}]},
-{id:"g14",title:"اختبارات المرحلة",icon:"📝",
-lessons:[{id:"t1",title:"اختبار الحروف العربية",body:"quiz",data:{questions:[
-{q:"كم عدد الحروف الهجائية؟",options:["26","28","30","24"],correct:1,explanation:"الحروف الهجائية العربية 28 حرفاً."},
-{q:"ما الحرف الذي يبدأ به كلمة (قلم)؟",options:["ن","ق","ب","م"],correct:1,explanation:"كلمة قلم تبدأ بالحرف (ق)."},
-{q:"أي كلمة تبدأ بحرف (ب)؟",options:["نار","قمر","باب","دار"],correct:2,explanation:"كلمة باب تبدأ بحرف الباء."},
-{q:"ما الحرف الأخير في الهجائية؟",options:["ي","و","أ","هـ"],correct:0,explanation:"الحرف الأخير هو الياء (ي)."},
-{q:"أكمل: ب، ت، ث، ...",options:["ج","ح","خ","د"],correct:0,explanation:"التسلسل الصحيح: باء، تاء، ثاء، ثم جيم."}
-]}}]}
-]},
-{id:"s2",emoji:"🔢",color:"bg-blue-500",title:"تأسيس رياضيات",sub:"أرقام وعمليات",
-grades:[
-{id:"g21",title:"الأرقام من 1 إلى 10",icon:"1️⃣",
-lessons:Array.from({length:10},(_,i)=>({id:"l21"+i,title:"الرقم "+(i+1),audio:String(i+1),body:"number",data:i+1}))},
-{id:"g22",title:"الجمع والطرح",icon:"➕",
-lessons:[
-{id:"l221",title:"الجمع من 0 إلى 10",body:"text",data:"الجمع يعني ضمّ الأشياء معاً. مثال: 2 + 3 = 5 🔊 <button onclick="speak('two plus three equals five')" class='text-emerald-600 underline'>استمع</button>"},
-{id:"l222",title:"الطرح من 0 إلى 10",body:"text",data:"الطرح يعني أخذ جزء من الكل. مثال: 5 − 2 = 3"}]},
-{id:"g23",title:"الضرب والقسمة",icon:"✖️",
-lessons:[
-{id:"l231",title:"جدول الضرب",body:"text",data:"جدول ضرب 2: 2، 4، 6، 8، 10، 12... <button onclick="speak('2,4,6,8,10,12')" class='text-emerald-600 underline'>🔊 استمع</button>"},
-{id:"l232",title:"القسمة المبسطة",body:"text",data:"القسمة عكس الضرب: 10 ÷ 2 = 5 لأن 5 × 2 = 10"}]},
-{id:"g24",title:"اختبارات المرحلة",icon:"📝",
-lessons:[{id:"t2",title:"اختبار الرياضيات",body:"quiz",data:{questions:[
-{q:"ما ناتج 3 + 4 ؟",options:["6","7","8","9"],correct:1,explanation:"3 + 4 = 7"},
-{q:"ما ناتج 9 − 5 ؟",options:["3","4","5","6"],correct:1,explanation:"9 − 5 = 4"},
-{q:"ما ناتج 2 × 5 ؟",options:["10","12","8","15"],correct:0,explanation:"2 × 5 = 10"},
-{q:"ما ناتج 8 ÷ 2 ؟",options:["2","3","4","5"],correct:2,explanation:"8 ÷ 2 = 4 لأن 4 × 2 = 8"},
-{q:"أي رقم يأتي بعد 7 ؟",options:["6","8","9","10"],correct:1,explanation:"التسلسل: 6، 7، 8"}
-]}}]}
-]},
-{id:"s3",emoji:"🇬🇧",color:"bg-indigo-500",title:"تعلم الإنجليزية",sub:"English",
-grades:[
-{id:"g31",title:"تأسيس اللغة الإنجليزية",icon:"🔡",
-lessons:[
-{id:"l311",title:"الحروف A-Z",body:"letters",data:EN_LETTERS},
-{id:"l312",title:"قراءة وكتابة كلمات بسيطة",body:"text",data:"Cat · Dog · Sun · Book — انقر للاستماع 🔊
-"+["Cat","Dog","Sun","Book"].map(w=>⁠<button onclick="speak('${w}')" class="m-1 bg-indigo-100 hover:bg-indigo-200 px-4 py-2 rounded-xl font-bold">${w} 🔊</button>⁠).join("")},
-{id:"l313",title:"القواعد الأساسية",body:"text",data:"<b>Present Simple:</b> I play, You play, He plays.
-<b>Articles:</b> a / an / the."}]},
-{id:"g32",title:"الانطلاقة",icon:"🚀",
-lessons:[
-{id:"l321",title:"الحصيلة اللغوية",audio:"one two three, red blue green, Saturday Sunday",body:"text",
-data:"<b>Numbers:</b> One Two Three 🔊   <b>Colors:</b> Red Blue Green 🔊   <button onclick="speak('One, two, three. Red, blue, green.')" class='text-emerald-600 underline'>🔊 استمع للكل</button>"},
-{id:"l322",title:"محادثات بطيئة",audio:"Hello! How are you? I am fine, thank you.",body:"text",
-data:"<i>Hello! How are you?
-I am fine, thank you. And you?</i>
-<button onclick="speak('Hello! How are you? I am fine, thank you.')" class='text-emerald-600 underline mt-2'>🔊 استمع للمحادثة</button>"}]},
-{id:"g33",title:"اختبارات المرحلة",icon:"📝",
-lessons:[{id:"t3",title:"اختبار الإنجليزية",body:"quiz",data:{questions:[
-{q:"What is the first letter of the alphabet?",options:["B","A","C","D"],correct:1,explanation:"The alphabet starts with A."},
-{q:"Choose the correct word:",options:["Cat","Ket","Cet","Ct"],correct:0,explanation:"The correct spelling is C-A-T."},
-{q:"What does 'Red' mean?",options:["أزرق","أخضر","أحمر","أصفر"],correct:2,explanation:"Red means اللون الأحمر."},
-{q:"Complete: I ___ a student.",options:["is","are","am","be"],correct:2,explanation:"With 'I' we use 'am'."},
-{q:"How many days are in a week?",options:["5","6","7","8"],correct:2,explanation:"A week has 7 days."}
-]}}]}
-]},
-{id:"s4",emoji:"🎯",color:"bg-amber-500",title:"القدرات والتحصيلي",sub:"اختبارات شاملـة",
-grades:[
-{id:"g41",title:"اختبارات القدرات (30 اختباراً)",icon:"🧠",tests:abilityTests},
-{id:"g42",title:"اختبارات التحصيلي (30 اختباراً)",icon:"📜",tests:achievementTests}
-]}
-];
-function loadDB(){
-let db = JSON.parse(localStorage.getItem(DB_KEY)||"null");
-if(!db){ db = {users:[],subs:[]}; saveDB(db); }
-return db;
-}
-function saveDB(db){ localStorage.setItem(DB_KEY, JSON.stringify(db)); }
-function currentUser(){
-const sid = localStorage.getItem("lntalem_session");
-if(!sid) return null;
-return loadDB().users.find(u=>u.id=sid)||null;
-}
-function isSubscribed(){
-const u = currentUser();
-return u && (u.status="active" || u.is_admin);
-}
-function speak(text,lang){
-speechSynthesis.cancel();
-const u = new SpeechSynthesisUtterance(text);
-u.lang = lang || (/[a-zA-Z]/.test(text)&&!/[\u0600-\u06FF]/.test(text) ? "en-US" : "ar-SA");
-u.rate = 0.85;
-speechSynthesis.speak(u);
-}
-function go(view,arg){ render(view,arg); window.scrollTo(0,0); }
-function openPaywall(){ document.getElementById("paywall").classList.replace("hidden","flex"); }
-function closePaywall(){ document.getElementById("paywall").classList.replace("flex","hidden"); }
-function renderNav(){
-const u = currentUser();
-const el = document.getElementById("nav-user");
-if(!u){
-el.innerHTML = ⁠<button onclick="go('login')" class="bg-white/20 px-4 py-1 rounded-lg hover:bg-white/30">تسجيل الدخول</button>⁠;
-} else {
-const badge = u.is_admin ? ⁠<span class="bg-amber-400 text-amber-900 text-xs px-2 py-1 rounded-full font-bold">مشرف</span>⁠
-: u.status==="active" ? ⁠<span class="bg-emerald-300 text-emerald-900 text-xs px-2 py-1 rounded-full font-bold">مشترك ✓</span>⁠
-: u.status==="pending" ? ⁠<span class="bg-yellow-300 text-yellow-900 text-xs px-2 py-1 rounded-full font-bold">قيد المراجعة ⏳</span>⁠ : "";
-el.innerHTML = ⁠${badge} <span class="text-sm hidden sm:inline">${u.email}</span> ${u.is_admin?⁠<button onclick="go('admin')" class="bg-amber-400 text-amber-900 px-3 py-1 rounded-lg font-bold text-sm">لوحة المشرف</button>⁠:""} <button onclick="logout()" class="bg-white/20 px-3 py-1 rounded-lg text-sm hover:bg-white/30">خروج</button>⁠;
-}
-}
-function logout(){ localStorage.removeItem("lntalem_session"); renderNav(); go("home"); }
-function render(view,arg){
-renderNav();
-const app = document.getElementById("app");
-if(view==="home") return renderHome(app);
-if(view==="stage") return renderStage(app,arg);
-if(view==="lesson") return renderLesson(app,arg);
-if(view==="quiz") return renderQuizIntro(app,arg);
-if(view==="subscribe") return renderSubscribe(app);
-if(view==="login") return renderLogin(app);
-if(view==="admin") return renderAdmin(app);
-}
-function renderHome(app){
-app.innerHTML = ⁠ <div class="text-center py-10"> <h1 class="text-4xl font-extrabold text-emerald-800 mb-3">أهلاً بك في <span class="bg-gradient-to-l from-emerald-600 to-teal-500 bg-clip-text text-transparent">منصة لنتعلم</span> 👋</h1> <p class="text-gray-600 text-lg">اختر مرحلتك وابدأ رحلة التعلّم خطوة بخطوة</p> </div> <div class="grid sm:grid-cols-2 gap-5"> ${CONTENT.map(s=>⁠
-<button onclick="go('stage','${s.id}')" class="stage-card ${s.color} text-white p-8">
-<span class="stage-emoji mb-4">￼
-<h2 class="text-2xl font-bold">{s.title}</h2>
-<p class="opacity-90 mt-1">${s.sub}</p>
-<span class="inline-block mt-4 bg-white/25 px-4 py-1.5 rounded-full text-sm font-bold">ابدأ الآن ←</span>
-</button>⁠).join("")} </div>⁠;
-}
-function renderStage(app,sid){
-const s = CONTENT.find(x=>x.id===sid);
-app.innerHTML = ⁠ <button onclick="go('home')" class="text-emerald-700 mb-4 underline">← العودة للرئيسية</button> <div class="${s.color} text-white rounded-3xl p-6 mb-6 flex items-center gap-4"> <span class="text-4xl">${s.emoji}</span> <div><h1 class="text-2xl font-bold">${s.title}</h1><p class="opacity-90">${s.sub}</p></div> </div> <div class="space-y-4"> ${s.grades.map((g,i)=>⁠
-<div class="bg-white rounded-2xl shadow overflow-hidden">
-<button onclick="toggleGrade('${g.id}')" class="w-full flex items-center justify-between p-5 hover:bg-gray-50">
-<span class="flex items-center gap-3 text-lg font-bold"><span class="grade-icon">￼{g.title}</span>
-<span id="arrow-${g.id}" class="text-gray-400 transition">▾</span>
-</button>
-<div id="grade-${g.id}" class="${i===0?'':'hidden'} border-t p-4 space-y-2 bg-gray-50">
-${(g.lessons||[]).map(l=>⁠ <button onclick="go('lesson',{sid:'${s.id}',gid:'${g.id}',lid:'${l.id}'})" class="w-full flex items-center justify-between bg-white border rounded-xl p-4 hover:border-emerald-500 hover:shadow"> <span class="font-bold">${l.title}</span> <span class="text-gray-400">🔒</span> </button>⁠).join("")}
-${(g.tests||[]).map(t=>⁠ <button onclick="go('quiz','${t.id}')" class="w-full flex items-center justify-between bg-white border rounded-xl p-4 hover:border-emerald-500 hover:shadow"> <span class="font-bold">${t.title} <span class="text-xs text-gray-500">(20 سؤالاً)</span></span> <span class="text-gray-400">🔒</span> </button>⁠).join("")}
-</div>
-</div>⁠).join("")} </div>⁠;
-}
-function toggleGrade(gid){
-document.getElementById("grade-"+gid).classList.toggle("hidden");
-}
-function renderLesson(app,{sid,gid,lid}){
-if(!isSubscribed()){ go("stage",sid); openPaywall(); return; }
-const s=CONTENT.find(x=>x.id=sid), g=s.grades.find(x=>x.id=gid), l=g.lessons.find(x=>x.id=lid);
-let body="";
-if(l.body="letter"){
-body=⁠<div class="text-center"> <button onclick="speak('${l.data}')" class="letter-tile big-letter text-8xl font-extrabold w-44 h-44 rounded-3xl mx-auto block">🔊 ${l.data}</button> <p class="mt-4 text-gray-600">انقر على الحرف لسماع نطقه</p></div>⁠;
-} else if(l.body==="number"){
-body=⁠<div class="text-center"> <button onclick="speak('${l.data}')" class="letter-tile big-number text-8xl font-extrabold w-44 h-44 rounded-3xl mx-auto block">🔊 ${l.data}</button> <p class="mt-4 text-gray-600">عدّ معي: ${"●".repeat(l.data)}</p></div>⁠;
-} else if(l.body==="letters"){
-body=⁠<p class="text-gray-600 mb-3">انقر على أي حرف لسماع نطقه:</p><div class="flex flex-wrap gap-2">⁠+
-l.data.map(L=>⁠<button onclick="speak('${L}')" class="letter-tile bg-indigo-100 hover:bg-indigo-200 w-12 h-12 rounded-xl font-bold text-lg shadow">${L}</button>⁠).join("")+⁠</div>⁠;
-} else if(l.body==="quiz"){
-return renderQuizIntro(app,l.data);
-} else {
-body=⁠<div class="bg-gray-50 rounded-xl p-5 leading-loose text-lg">${l.data}</div>⁠;
-}
-app.innerHTML = ⁠ <button onclick="go('stage','${sid}')" class="text-emerald-700 mb-4 underline">← عودة</button> <h1 class="text-2xl font-bold mb-4">${l.title}</h1>${body}⁠;
-}
-let QZ=null;
-function renderQuizIntro(app,arg){
-if(!isSubscribed()){ go("home"); openPaywall(); return; }
-let title,questions;
-if(typeof arg==="string"){
-const t=[...abilityTests,...achievementTests].find(x=>x.id=arg);
-title=t.title; questions=t.questions;
-} else { title="اختبار تقييمي"; questions=arg.questions; }
-app.innerHTML=⁠ <button onclick="history.back()" class="text-emerald-700 mb-4 underline">← عودة</button> <div class="bg-white rounded-2xl shadow p-8 text-center"> <div class="text-6xl mb-4">📝</div> <h1 class="text-2xl font-bold mb-2">${title}</h1> <p class="text-gray-600 mb-6">${questions.length} سؤالاً</p> <button onclick='startQuiz(${JSON.stringify({title,questions}).replace(/'/g,"&#39;")})' class="btn-glow bg-emerald-600 text-white px-10 py-3.5 rounded-xl font-extrabold text-lg">🚀 ابدأ الاختبار</button> </div>⁠;
-}
-function startQuiz(data){
-QZ={...data,i:0,score:0,locked:false};
-renderQuizQ();
-}
-function renderQuizQ(){
-const app=document.getElementById("app");
-const q=QZ.questions[QZ.i];
-app.innerHTML=⁠ <div class="bg-white rounded-2xl shadow p-6"> <div class="flex justify-between text-sm text-gray-500 mb-3"> <span>سؤال ${QZ.i+1} من ${QZ.questions.length}</span><span>النقاط: ${QZ.score}</span> </div> <h2 class="text-xl font-bold mb-3">${q.q}</h2> <div class="grid gap-3"> ${q.options.map((o,i)=>⁠<button id="opt${i}" onclick="answer(${i})" class="p-4 rounded-xl border-2 border-gray-200 text-right hover:border-emerald-500 font-bold">${o}</button>⁠).join("")} </div> <p id="expl" class="hidden mt-4 bg-emerald-50 border-r-4 border-emerald-500 p-3 rounded-lg"></p> </div>⁠;
-}
-function answer(i){
-if(QZ.locked)return; QZ.locked=true;
-const q=QZ.questions[QZ.i];
-const ok=i=q.correct;
-if(ok)QZ.score++;
-document.getElementById("opt"+i).className=⁠p-4 rounded-xl border-2 ${ok?'border-green-500 bg-green-50':'border-red-500 bg-red-50'} text-right font-bold⁠;
-document.getElementById("opt"+q.correct).className="p-4 rounded-xl border-2 border-green-500 bg-green-50 text-right font-bold";
-const e=document.getElementById("expl");
-e.innerHTML="💡 <b>الشرح:</b> "+q.explanation;
-e.classList.remove("hidden");
-setTimeout(()=>{
-QZ.locked=false;
-if(QZ.i+1<QZ.questions.length){QZ.i++;renderQuizQ();}
-else renderQuizResult();
-},2000);
-}
-function renderQuizResult(){
-const pct=Math.round(QZ.score/QZ.questions.length*100);
-document.getElementById("app").innerHTML=⁠ <div class="bg-white rounded-2xl shadow p-8 text-center pop"> <h2 class="text-2xl font-bold">نتيجتك: ${QZ.score} من ${QZ.questions.length} (${pct}%)</h2> <button onclick="go('home')" class="btn-glow mt-6 bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold">العودة للرئيسية</button> </div>⁠;
-}
-function renderLogin(app){
-app.innerHTML=⁠ <div class="max-w-md mx-auto bg-white rounded-2xl shadow p-8 mt-6"> <h1 class="text-2xl font-bold text-center mb-6">تسجيل الدخول 🔐</h1> <input id="em" type="email" placeholder="البريد الإلكتروني" class="w-full border rounded-xl p-3 mb-3"> <input id="pw" type="password" placeholder="كلمة المرور" class="w-full border rounded-xl p-3 mb-4"> <button onclick="doLogin()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700">دخول</button> <p class="text-center text-sm text-gray-500 mt-3">ليس لديك حساب؟ <button onclick="doRegister()" class="text-emerald-600 underline">أنشئ حساباً جديداً</button></p> </div>⁠;
-}
-function doLogin(){
-const em=document.getElementById("em").value.trim().toLowerCase();
-const pw=document.getElementById("pw").value;
-const u=loadDB().users.find(x=>x.email=em&&x.password=pw);
-if(!u)return alert("بيانات الدخول غير صحيحة");
-localStorage.setItem("lntalem_session",u.id);
-go(u.is_admin?"admin":"home");
-}
-function doRegister(){
-const em=document.getElementById("em").value.trim().toLowerCase();
-const pw=document.getElementById("pw").value;
-if(!em||!pw)return alert("أدخل البريد وكلمة المرور");
-const db=loadDB();
-if(db.users.find(x=>x.email=em))return alert("البريد مسجل مسبقاً");
-const isAdmin = em="kmskms653@gmail.com";
-const u={id:"u"+Date.now(),email:em,password:pw,is_admin:isAdmin,status:isAdmin?"active":"none"};
-db.users.push(u); saveDB(db);
-localStorage.setItem("lntalem_session",u.id);
-alert(isAdmin?"✅ تم تفعيل حسابك كمشرف":"✅ تم إنشاء حسابك بنجاح");
-go(isAdmin?"admin":"home");
-}
-function renderSubscribe(app){
-const u=currentUser();
-if(!u)return renderLogin(app);
-app.innerHTML=⁠ <h1 class="text-3xl font-bold text-center mb-8">اختر خطتك 💎</h1> <div class="max-w-xl mx-auto bg-white rounded-2xl shadow p-6 mb-6"> <h2 class="font-bold text-xl mb-4">📋 التحويل البنكي (Urpay):</h2> <p>رقم الآيبان:</p> <p dir="ltr" class="bg-gray-100 p-2 rounded text-center font-mono select-all">SA7280206153985222121018</p> </div> <div class="max-w-xl mx-auto bg-white rounded-2xl shadow p-6"> <label class="block border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer"> <input type="file" accept="image/*" class="hidden" onchange="pickReceipt(this)"> <span id="rc-label">📸 ارفع صورة الإيصال هنا</span> </label> <button onclick="submitSub()" class="w-full mt-4 bg-emerald-600 text-white py-3 rounded-xl font-bold">إرسال طلب التفعيل</button> </div>⁠;
-}
-let receiptData=null;
-function pickReceipt(inp){
-const f=inp.files[0];
-if(!f)return;
-const r=new FileReader();
-r.onload=e=>{receiptData=e.target.result;document.getElementById("rc-label").innerHTML="✅ "+f.name;};
-r.readAsDataURL(f);
-}
-function submitSub(){
-if(!receiptData)return alert("يرجى إرفاق صورة الإيصال");
-const db=loadDB(), u=currentUser();
-db.subs.push({id:"s"+Date.now(),userId:u.id,plan:"yearly",receipt:receiptData,status:"pending",date:new Date().toLocaleDateString("ar-SA")});
-db.users.find(x=>x.id===u.id).status="pending"; saveDB(db);
-alert("تم استلام طلبك، وسيتم تفعيله قريباً.");
-go("home");
-}
-function renderAdmin(app){
-const u=currentUser();
-if(!u||!u.is_admin){alert("للمشرف فقط");return go("home");}
-const db=loadDB();
-const pending=db.subs.filter(s=>s.status==="pending");
-app.innerHTML=⁠ <h1 class="text-3xl font-bold mb-2">🛠️ لوحة المشرف</h1> <h2 class="text-xl font-bold mb-3">طلبات الاشتراك المعلقة (${pending.length})</h2> <div class="space-y-4"> ${pending.map(s=>⁠<div class="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-<img src="${s.receipt}" class="w-16 h-16 object-cover rounded cursor-pointer" onclick="window.open('${s.receipt}')">
-<div class="flex-1"><p class="font-bold">${s.userId}</p></div>
-<button onclick="decide('${s.id}',true)" class="bg-green-600 text-white px-3 py-1 rounded">موافقة</button>
-<button onclick="decide('${s.id}',false)" class="bg-red-600 text-white px-3 py-1 rounded">رفض</button>
-</div>⁠).join("")} </div>⁠;
-}
-function decide(sid,ok){
-const db=loadDB();
-const s=db.subs.find(x=>x.id=sid);
-s.status=ok?"active":"rejected";
-db.users.find(x=>x.id=s.userId).status=ok?"active":"rejected";
-saveDB(db); renderAdmin(document.getElementById("app")); renderNav();
-}
-go("home");
-</script>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-indigo-600 text-white shadow-md">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div class="bg-white text-indigo-600 p-2 rounded-xl font-black text-xl shadow">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold">منصة لنتعلم</h1>
+                    <p class="text-xs text-indigo-200">التعليم التفاعلي الشامل</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 space-x-reverse">
+                <button onclick="switchTab('home')" class="px-3 py-1.5 rounded-lg bg-indigo-700 hover:bg-indigo-800 transition text-sm font-semibold">الرئيسية</button>
+                <button onclick="switchTab('admin')" class="px-3 py-1.5 rounded-lg bg-indigo-800 hover:bg-indigo-900 transition text-sm font-semibold"><i class="fa-solid fa-lock ml-1"></i> لوحة الإدارة</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow container mx-auto px-4 py-6">
+        
+        <!-- Home Tab -->
+        <div id="tab-home" class="space-y-6">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row justify-between items-center">
+                <div class="space-y-2 mb-4 md:mb-0">
+                    <h2 class="text-2xl md:text-3xl font-black">مرحباً بك في منصة لنتعلم التعليمية</h2>
+                    <p class="text-indigo-100 text-sm md:text-base">استكشف الأقسام التأسيسية، الرياضيات، اللغة الإنجليزية، واختبارات القدرات والتحصيلي.</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 text-center">
+                    <span class="block text-xs text-indigo-200">حالة الاشتراك</span>
+                    <span id="user-status-badge" class="font-bold text-lg text-yellow-300">نسخة تجريبية مجانية</span>
+                </div>
+            </div>
+
+            <!-- Sections Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Section 1 -->
+                <div onclick="openSection('arabic')" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition cursor-pointer flex flex-col items-center text-center group">
+                    <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-slate-800 mb-1">اللغة العربية والتأسيس</h3>
+                    <p class="text-xs text-slate-500">الحروف، الحركات، القراءة والكتابة للأطفال.</p>
+                </div>
+
+                <!-- Section 2 -->
+                <div onclick="openSection('math')" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition cursor-pointer flex flex-col items-center text-center group">
+                    <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-calculator"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-slate-800 mb-1">الرياضيات والمسائل</h3>
+                    <p class="text-xs text-slate-500">العمليات الحسابية والمهارات الذهنية.</p>
+                </div>
+
+                <!-- Section 3 -->
+                <div onclick="openSection('english')" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition cursor-pointer flex flex-col items-center text-center group">
+                    <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-globe"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-slate-800 mb-1">اللغة الإنجليزية</h3>
+                    <p class="text-xs text-slate-500">تعلم الكلمات، القواعد الأساسية والمحادثة.</p>
+                </div>
+
+                <!-- Section 4 -->
+                <div onclick="openSection('tests')" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition cursor-pointer flex flex-col items-center text-center group">
+                    <div class="w-16 h-16 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-award"></i>
+                    </div>
+                    <h3 class="font-bold text-lg text-slate-800 mb-1">القدرات والتحصيلي</h3>
+                    <p class="text-xs text-slate-500">تدريبات واختبارات تجريبية شاملة.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Content View Area -->
+        <div id="tab-content-area" class="hidden bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+            <button onclick="switchTab('home')" class="mb-4 inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800">
+                <i class="fa-solid fa-arrow-right ml-2"></i> العودة للرئيسية
+            </button>
+            <div id="dynamic-inner-content"></div>
+        </div>
+
+        <!-- Admin Tab -->
+        <div id="tab-admin" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <h2 class="text-xl font-bold text-slate-800 mb-4"><i class="fa-solid fa-lock text-indigo-600 ml-2"></i> لوحة تحكم المشرف</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500">إجمالي المشتركين</span>
+                        <h3 class="text-2xl font-black text-slate-800" id="stat-users">12</h3>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500">الأقسام النشطة</span>
+                        <h3 class="text-2xl font-black text-indigo-600">4 أقسام</h3>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs text-slate-500">إصدار النظام</span>
+                        <h3 class="text-2xl font-black text-emerald-600">v1.0.0</h3>
+                    </div>
+                </div>
+                <div class="flex space-x-2 space-x-reverse">
+                    <button onclick="alert('تم تحديث البيانات بنجاح!')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">حفظ التغييرات</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-100 py-4 text-center text-xs text-slate-500">
+        جميع الحقوق محفوظة لصالح منصة لنتعلم &copy; 2026
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        function switchTab(tabName) {
+            document.getElementById('tab-home').classList.add('hidden');
+            document.getElementById('tab-admin').classList.add('hidden');
+            document.getElementById('tab-content-area').classList.add('hidden');
+
+            if (tabName === 'home') {
+                document.getElementById('tab-home').classList.remove('hidden');
+            } else if (tabName === 'admin') {
+                document.getElementById('tab-admin').classList.remove('hidden');
+            } else if (tabName === 'content') {
+                document.getElementById('tab-content-area').classList.remove('hidden');
+            }
+        }
+
+        function openSection(sectionKey) {
+            switchTab('content');
+            const container = document.getElementById('dynamic-inner-content');
+            
+            if (sectionKey === 'arabic') {
+                container.innerHTML = `
+                    <h2 class="text-xl font-bold text-slate-800 mb-3">قسم اللغة العربية والتأسيس</h2>
+                    <p class="text-slate-600 text-sm mb-4">أهلاً بك في قسم تأسيس الأطفال بالقراءة والكتابة.</p>
+                    <div class="grid grid-cols-6 gap-2 text-center">
+                        <div class="p-4 bg-indigo-50 text-indigo-700 rounded-xl font-bold text-xl">أ</div>
+                        <div class="p-4 bg-indigo-50 text-indigo-700 rounded-xl font-bold text-xl">ب</div>
+                        <div class="p-4 bg-indigo-50 text-indigo-700 rounded-xl font-bold text-xl">ت</div>
+                        <div class="p-4 bg-indigo-50 text-indigo-700 rounded-xl font-bold text-xl">ث</div>
+                        <div class="p-4 bg-indigo-50 text-indigo-700 rounded-xl font-bold text-xl">ج</div>
+                        <div class="p-4 bg-indigo-50 text-indigo-700 rounded-xl font-bold text-xl">ح</div>
+                    </div>
+                `;
+            } else if (sectionKey === 'math') {
+                container.innerHTML = `
+                    <h2 class="text-xl font-bold text-slate-800 mb-3">قسم الرياضيات والمسائل</h2>
+                    <p class="text-slate-600 text-sm mb-4">اختر التمارين الحسابية المناسبة للمرحلة الدراسية.</p>
+                    <div class="p-4 bg-emerald-50 text-emerald-800 rounded-xl">تمارين الجمع والطرح والضرب قيد التحميل...</div>
+                `;
+            } else if (sectionKey === 'english') {
+                container.innerHTML = `
+                    <h2 class="text-xl font-bold text-slate-800 mb-3">قسم اللغة الإنجليزية</h2>
+                    <p class="text-slate-600 text-sm mb-4">تعلم الحروف والكلمات الشائعة باللغة الإنجليزية.</p>
+                    <div class="grid grid-cols-4 gap-2 text-center">
+                        <div class="p-4 bg-amber-50 text-amber-700 rounded-xl font-bold text-xl">A a</div>
+                        <div class="p-4 bg-amber-50 text-amber-700 rounded-xl font-bold text-xl">B b</div>
+                        <div class="p-4 bg-amber-50 text-amber-700 rounded-xl font-bold text-xl">C c</div>
+                        <div class="p-4 bg-amber-50 text-amber-700 rounded-xl font-bold text-xl">D d</div>
+                    </div>
+                `;
+            } else if (sectionKey === 'tests') {
+                container.innerHTML = `
+                    <h2 class="text-xl font-bold text-slate-800 mb-3">اختبارات القدرات والتحصيلي</h2>
+                    <p class="text-slate-600 text-sm mb-4">اختبر معلوماتك العقلية والأكاديمية بنماذج تجريبية.</p>
+                    <div class="p-4 bg-purple-50 text-purple-800 rounded-xl">نموذج اختبار تجريبي رقم (1) - جاهز للبدء.</div>
+                `;
+            }
+        }
+    </script>
 </body>
 </html>
