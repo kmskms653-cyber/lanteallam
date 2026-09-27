@@ -1,0 +1,8 @@
+# إنشاء مشروع Flutter جديد
+flutter create quiz_app
+
+# الدخول إلى مجلد المشروع
+cd quiz_app
+
+# تشغيل التطبيق على المحاكي
+flutter run
