@@ -1,0 +1,204 @@
+my-educational-app/
+├── public/
+│   └── audio/              <-- (ملفات الصوت لنطق الحروف والكلمات)
+├── src/
+│   ├── data/
+│   │   └── data.json       <-- (ضع ملف الهيكلية الشامل الذي أرسلناه هنا)
+│   ├── components/         <-- (المكونات الواسعة مثل أزرار، بطاقات، قوائم)
+│   ├── app/ (أو pages/)    <-- (الصفحات الرئيسية وصفحات الأقسام والاختبارات)
+│   │   ├── page.js         <-- (الصفحة الرئيسية للمراحل الأربع)
+│   │   ├── stages/
+│   │   │   └── [stageId]/  <-- (صفحة الأقسام الفرعية التفاعلية)
+│   │   └── exams/          <-- (صفحة اختبارات القدرات والتحصيلي)
+│   └── styles/
+│       └── globals.css
+├── package.json
+└── README.md
+{
+  "educationalStages": [
+    {
+      "stageId": "arabic_foundation",
+      "title": "تأسيس للحروف العربية قراءة وكتابة",
+      "icon": "arabic_alphabet",
+      "subSections": [
+        {
+          "subId": "letters",
+          "title": "أ- الحروف الهجائية",
+          "description": "نطق الحرف وتعليم الكتابة التفاعلية",
+          "items": [
+            {"char": "أ", "name": "ألف", "soundUrl": "audio/alif.mp3", "traceData": "path_to_trace_a"},
+            {"char": "ب", "name": "باء", "soundUrl": "audio/baa.mp3", "traceData": "path_to_trace_b"},
+            {"char": "ت", "name": "تاء", "soundUrl": "audio/taa.mp3", "traceData": "path_to_trace_t"}
+          ]
+        },
+        {
+          "subId": "reading",
+          "title": "ب- قراءة الكلمات",
+          "description": "شرح قراءة الكلمات مع نطق صوتي",
+          "items": [
+            {"word": "أَسَد", "soundUrl": "audio/asad.mp3", "meaning": "حيوان مفترس"},
+            {"word": "بَقَرَة", "soundUrl": "audio/baqara.mp3", "meaning": "حيوان مزرعة"}
+          ]
+        },
+        {
+          "subId": "writing",
+          "title": "ج- كتابة الكلمات",
+          "description": "تعليم كتابة الكلمات بطريقة تفاعلية",
+          "items": [
+            {"word": "دَار", "steps": ["د", "ا", "ر"]},
+            {"word": "نُور", "steps": ["ن", "و", "ر"]}
+          ]
+        },
+        {
+          "subId": "tests",
+          "title": "د- اختبارات المرحلة الأولى",
+          "description": "اختبارات مبسطة مع النتيجة والشرح",
+          "quizList": [
+            {
+              "question": "ما هو الحرف الأول في كلمة 'أسد'؟",
+              "options": ["ب", "أ", "ت", "ج"],
+              "correctIndex": 1,
+              "explanation": "الحرف الأول هو الألف (أ) المفتوحة."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stageId": "math_foundation",
+      "title": "تأسيس رياضيات",
+      "icon": "math_icon",
+      "subSections": [
+        {
+          "subId": "numbers",
+          "title": "أ- الأرقام",
+          "description": "شروحات للأرقام من 1 إلى 10 مع طريقة الكتابة",
+          "items": [
+            {"number": 1, "name": "واحد", "representation": "•"},
+            {"number": 2, "name": "اثنان", "representation": "••"}
+          ]
+        },
+        {
+          "subId": "addition_subtraction",
+          "title": "ب- الجمع والطرح",
+          "description": "شرح مبسط لجمع وطرح الأعداد من 0 إلى 10",
+          "examples": [
+            {"operation": "3 + 2 = 5", "explanation": "نضيف عنصرين إلى ثلاثة عناصر ليصبح المجموع خمسة."},
+            {"operation": "5 - 2 = 3", "explanation": "نقص عنصرين من خمسة عناصر يتبقى ثلاثة."}
+          ]
+        },
+        {
+          "subId": "multiplication_division",
+          "title": "ج- الضرب والقسمة",
+          "description": "جدول الضرب وشرح مبسط للقسمة",
+          "examples": [
+            {"operation": "2 × 3 = 6", "explanation": "تكرار جمع الرقم 2 ثلاث مرات."},
+            {"operation": "6 ÷ 2 = 3", "explanation": "توزيع العدد 6 على مجموعتين بالتساوي."}
+          ]
+        },
+        {
+          "subId": "tests",
+          "title": "د- اختبارات الرياضيات",
+          "quizList": [
+            {
+              "question": "ما ناتج جمع: 4 + 3 ؟",
+              "options": ["6", "7", "8", "5"],
+              "correctIndex": 1,
+              "explanation": "جمع 4 مع 3 يساوي 7."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stageId": "english_learning",
+      "title": "تعلم الإنجليزية",
+      "icon": "english_icon",
+      "subSections": [
+        {
+          "subId": "foundation",
+          "title": "أ- تأسيس لغة إنجليزية",
+          "part1": {
+            "title": "الحروف الهجائية الإنجليزية",
+            "description": "نطق الحرف وقراءة وكتابة الكلمات البسيطة",
+            "items": [{"char": "A", "sound": "эй", "word": "Apple"}]
+          },
+          "part2": {
+            "title": "القواعد الأساسية",
+            "description": "شرح مبسط للقواعد مع أمثلة",
+            "topics": [{"rule": "Pronouns (الضمائر)", "example": "He, She, It"}]
+          }
+        },
+        {
+          "subId": "fluency",
+          "title": "ب- الإنطلاقة",
+          "part1": {
+            "title": "الحصيلة اللغوية",
+            "description": "الكلمات الأكثر شيوعاً (أرقام، ألوان، أيام، عائلة، طعام)",
+            "vocab": [
+              {"category": "الألوان", "words": ["Red أحمر", "Blue أزرق"]}
+            ]
+          },
+          "part2": {
+            "title": "نصوص ومقاطع صوتية",
+            "description": "محادثات بطيئة وقصص أطفال قصيرة",
+            "content": "قصص صوتية موجهة للمبتدئين..."
+          }
+        },
+        {
+          "subId": "tests",
+          "title": "ج- اختبارات الإنجليزية",
+          "quizList": [
+            {
+              "question": "What color is the apple? (Red)",
+              "options": ["Blue", "Red", "Green", "Yellow"],
+              "correctIndex": 1,
+              "explanation": "التفاح الأحمر شائع في الأمثلة التعليمية الأساسية."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stageId": "qudrat_tahsili",
+      "title": "القدرات والتحصيلي",
+      "icon": "exam_icon",
+      "subSections": [
+        {
+          "subId": "qudrat_exams",
+          "title": "أ- إختبار القدرات",
+          "description": "30 اختباراً متنوعاً (كل اختبار 20 سؤالاً) مع توليد ذكاء اصطناعي وشرح للإجابة",
+          "totalTests": 30,
+          "questionsPerTest": 20,
+          "aiGenerationSupported": true,
+          "sampleTest": {
+            "testId": "qudrat_01",
+            "title": "اختبار القدرات التجريبي (1)",
+            "questions": [
+              {
+                "id": 1,
+                "question": "إذا كان محمد يمتعض من السفر، فإن طائرة : مفردة تناسب السياق...",
+                "options": ["خيار أ", "خيار ب", "خيار ج", "خيار د"],
+                "correctIndex": 0,
+                "explanation": "شرح طريقة حل التناظر اللفظي أو الكمي بالتفصيل..."
+              }
+            ]
+          }
+        },
+        {
+          "subId": "tahsili_exams",
+          "title": "ب- إختبار التحصيلي",
+          "description": "30 اختباراً متنوعاً (كل اختبار 20 سؤالاً) تغطي مواد الثانوية العامة مع الشرح والتوليد التلقائي",
+          "totalTests": 30,
+          "questionsPerTest": 20,
+          "aiGenerationSupported": true,
+          "sampleTest": {
+            "testId": "tahsili_01",
+            "title": "اختبار التحصيلي التجريبي (1) - رياضيات/فيزياء",
+            "questions": [
+              {
+                "id": 1,
+                "question": "ما هي مشتقة الدالة f(x) = x^2 ؟",
+                "options": ["2x", "x", "x^2", "2"],
+                "correctIndex": 0,
+                "explanation": "باستخدام قاعدة القوة في التفاضل: نزل الأس واطرح منه 
