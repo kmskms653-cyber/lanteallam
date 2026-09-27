@@ -57,3 +57,24 @@ async function getExamData(examId: string) {
   const fileData = fs.readFileSync(filePath, 'utf8');
   return JSON.parse(fileData);
 }
+{
+  "testId": "test_01",
+  "testTitle": "اختبار التحصيلي 1",
+  "subject": "عام",
+  "questions": [
+    {
+      "id": 1,
+      "question": "نص السؤال هنا...",
+      "options": [
+        "الخيار الأول",
+        "الخيار الثاني",
+        "الخيار الثالث",
+        "الخيار الرابع"
+      ],
+      "correctIndex": 0,
+      "explanation": "شرح الإجابة الصحيحة ولماذا كانت بقية الخيارات خاطئة...",
+      "difficulty": "متوسط",
+      "skill": "المهارة المستهدفة"
+    }
+  ]
+}
