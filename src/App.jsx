@@ -1,6 +1,10 @@
 import React, { useMemo, useState } from "react";
 import educationalData from "./data/data.json";
-import { tahsiliTest01 } from "./examsData";
+import {
+  tahsiliTest01,
+  tahsiliExams,
+  getExamData,
+} from "./examsData";
 
 const ADMIN_EMAIL = "kmskms653@gmail.com";
 
@@ -14,209 +18,158 @@ const LESSON_TYPES = {
 };
 
 function normalizeAnswer(value) {
-  if (value === undefined || value === null) return "";
-
   if (Array.isArray(value)) {
-    return value.map((item) => String(item).trim()).join("|");
+    return value
+      .map((item) => String(item).trim().toLowerCase())
+      .join("|");
   }
 
-  return String(value).trim().toLowerCase();
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
 }
 
-function answersAreEqual(answer, correctAnswer) {
+function answersAreEqual(userAnswer, correctAnswer) {
   if (Array.isArray(correctAnswer)) {
-    if (!Array.isArray(answer)) return false;
+    if (!Array.isArray(userAnswer)) return false;
 
-    return (
-      answer.length === correctAnswer.length &&
-      answer.every(
-        (item, index) =>
-          normalizeAnswer(item) ===
-          normalizeAnswer(correctAnswer[index])
-      )
+    if (userAnswer.length !== correctAnswer.length) {
+      return false;
+    }
+
+    return userAnswer.every(
+      (answer, index) =>
+        normalizeAnswer(answer) ===
+        normalizeAnswer(correctAnswer[index])
     );
   }
 
   return (
-    normalizeAnswer(answer) ===
+    normalizeAnswer(userAnswer) ===
     normalizeAnswer(correctAnswer)
   );
 }
 
 function createLessonFromSection(stage, section) {
-  const shortLessons = [];
   const activities = [];
-  const assessmentQuestions = [];
+  const shortLessons = [];
 
   /*
-   * الحروف العربية / الكلمات / الكتابة / الأرقام
+   * الحروف / الكلمات / الأرقام
    */
-  if (Array.isArray(section.items) && section.items.length > 0) {
-    const firstItem = section.items[0];
+  if (Array.isArray(section.items)) {
+    section.items.forEach((item, index) => {
+      if (item.char) {
+        shortLessons.push({
+          id: `${section.subId}-lesson-${index + 1}`,
+          title: `الحرف ${item.char}`,
+          explanation: `نتعلم نطق وكتابة حرف ${item.char} (${item.name || ""}).`,
+          examples: [
+            item.name
+              ? `${item.char} = ${item.name}`
+              : item.char,
+          ],
+        });
 
-    /*
-     * الحروف العربية
-     */
-    if (firstItem.char) {
-      shortLessons.push({
-        id: `${section.subId}-letters`,
-        title: "التعرف على الحروف",
-        explanation:
-          "نتعرف على الحرف وشكله واسمه، ثم نتدرب على نطقه وكتابته بطريقة تدريجية.",
-        examples: section.items.map(
-          (item) => `${item.char} — ${item.name}`
-        ),
-      });
-
-      section.items.forEach((item, index) => {
         activities.push({
-          id: `${section.subId}-letters-activity-${index + 1}`,
+          id: `${section.subId}-activity-${index + 1}`,
           type: "reading",
           question: `اقرأ الحرف التالي: ${item.char}`,
-          options: item.name ? [item.name] : [],
-          correctAnswer: item.name,
-          explanation: `الحرف ${item.char} يسمى ${item.name}.`,
+          correctAnswer: item.char,
+          explanation: item.name
+            ? `هذا الحرف هو ${item.name}.`
+            : `الحرف المطلوب هو ${item.char}.`,
         });
-      });
-    }
 
-    /*
-     * قراءة الكلمات
-     */
-    if (firstItem.word && firstItem.meaning) {
-      shortLessons.push({
-        id: `${section.subId}-words`,
-        title: "قراءة الكلمات وفهم معناها",
-        explanation:
-          "نقرأ الكلمة بالتشكيل ثم نتعرف على معناها ونربطها بالنطق الصحيح.",
-        examples: section.items.map(
-          (item) => `${item.word} — ${item.meaning}`
-        ),
-      });
+        return;
+      }
 
-      section.items.forEach((item, index) => {
-        activities.push({
-          id: `${section.subId}-words-activity-${index + 1}`,
-          type: "choice",
-          question: `ما معنى كلمة «${item.word}»؟`,
-          options: [
-            item.meaning,
-            "كلمة أخرى",
-            "لا نعرف معناها",
-          ],
-          correctAnswer: item.meaning,
-          explanation: `معنى «${item.word}» هو: ${item.meaning}.`,
-        });
-      });
-    }
-
-    /*
-     * الكتابة وتكوين الكلمة
-     */
-    if (Array.isArray(firstItem.steps)) {
-      shortLessons.push({
-        id: `${section.subId}-writing`,
-        title: "تكوين الكلمة خطوة بخطوة",
-        explanation:
-          "نتعلم تكوين الكلمة من حروفها بالترتيب الصحيح.",
-        examples: section.items.map(
-          (item) =>
-            `${item.word}: ${item.steps.join(" ← ")}`
-        ),
-      });
-
-      section.items.forEach((item, index) => {
-        activities.push({
-          id: `${section.subId}-ordering-activity-${index + 1}`,
-          type: "ordering",
-          question: `رتب حروف كلمة «${item.word}» بالترتيب الصحيح.`,
-          options: [...item.steps],
-          correctAnswer: [...item.steps],
-          explanation: `تتكون كلمة «${item.word}» من: ${item.steps.join(
-            "، "
-          )}.`,
+      if (item.word) {
+        shortLessons.push({
+          id: `${section.subId}-lesson-${index + 1}`,
+          title: `كلمة: ${item.word}`,
+          explanation:
+            item.meaning ||
+            `نتعلم قراءة وكتابة كلمة ${item.word}.`,
+          examples: [item.word],
         });
 
         activities.push({
-          id: `${section.subId}-writing-activity-${index + 1}`,
-          type: "writing",
-          question: `اكتب كلمة «${item.word}» كاملة.`,
+          id: `${section.subId}-activity-${index + 1}`,
+          type: "reading",
+          question: `اقرأ الكلمة التالية: ${item.word}`,
           correctAnswer: item.word,
-          explanation: `الكلمة الصحيحة هي: ${item.word}.`,
+          explanation:
+            item.meaning ||
+            `الكلمة هي: ${item.word}.`,
         });
-      });
-    }
 
-    /*
-     * الأرقام
-     */
-    if (typeof firstItem.number === "number") {
-      shortLessons.push({
-        id: `${section.subId}-numbers`,
-        title: "التعرف على الأرقام",
-        explanation:
-          "نتعرف على الرقم واسمه وتمثيله بعدد من العناصر.",
-        examples: section.items.map(
-          (item) =>
-            `${item.number} — ${item.name} — ${item.representation}`
-        ),
-      });
+        if (Array.isArray(item.steps)) {
+          activities.push({
+            id: `${section.subId}-writing-${index + 1}`,
+            type: "writing",
+            question: `اكتب الكلمة التالية: ${item.word}`,
+            correctAnswer: item.word,
+            explanation: `تتكون الكلمة من: ${item.steps.join(" - ")}`,
+          });
+        }
 
-      section.items.forEach((item, index) => {
-        activities.push({
-          id: `${section.subId}-numbers-activity-${index + 1}`,
-          type: "choice",
-          question: `ما اسم الرقم ${item.number}؟`,
-          options: [
-            item.name,
-            "اسم مختلف",
-            "لا يوجد اسم",
-            "رقم آخر",
+        return;
+      }
+
+      if (typeof item.number === "number") {
+        shortLessons.push({
+          id: `${section.subId}-lesson-${index + 1}`,
+          title: `الرقم ${item.number}`,
+          explanation:
+            item.name
+              ? `الرقم ${item.number} يسمى ${item.name}.`
+              : `نتعلم الرقم ${item.number}.`,
+          examples: [
+            item.representation ||
+              String(item.number),
           ],
-          correctAnswer: item.name,
-          explanation: `الرقم ${item.number} يسمى ${item.name}.`,
         });
-      });
-    }
+
+        activities.push({
+          id: `${section.subId}-activity-${index + 1}`,
+          type: "choice",
+          question: `ما الرقم الذي أمامك؟ ${item.representation || ""}`,
+          options: [
+            String(item.number),
+            String(item.number + 1),
+            String(Math.max(0, item.number - 1)),
+          ],
+          correctAnswer: String(item.number),
+          explanation: `الإجابة الصحيحة هي ${item.number}.`,
+        });
+      }
+    });
   }
 
   /*
-   * أمثلة العمليات الحسابية
+   * الأمثلة الحسابية
    */
   if (Array.isArray(section.examples)) {
-    shortLessons.push({
-      id: `${section.subId}-examples`,
-      title: section.title,
-      explanation:
-        section.description || "شرح مبسط للموضوع.",
-      examples: section.examples.map(
-        (example) =>
-          `${example.operation}: ${example.explanation}`
-      ),
-    });
-
     section.examples.forEach((example, index) => {
-      const answerMatch = String(example.operation || "").match(
-        /=\s*([^=]+)$/
-      );
+      shortLessons.push({
+        id: `${section.subId}-example-${index + 1}`,
+        title: example.operation,
+        explanation:
+          example.explanation ||
+          "تطبيق عملي على المهارة.",
+        examples: [example.operation],
+      });
 
-      const answer = answerMatch
-        ? answerMatch[1].trim()
-        : "";
-
-      if (answer) {
-        activities.push({
-          id: `${section.subId}-calculation-activity-${index + 1}`,
-          type: "calculation",
-          question: `احسب: ${String(
-            example.operation
-          ).split("=")[0].trim()} = ؟`,
-          correctAnswer: answer,
-          explanation:
-            example.explanation ||
-            `الإجابة الصحيحة هي ${answer}.`,
-        });
-      }
+      activities.push({
+        id: `${section.subId}-calculation-${index + 1}`,
+        type: "calculation",
+        question: `حل العملية التالية: ${example.operation}`,
+        correctAnswer: example.operation,
+        explanation:
+          example.explanation ||
+          "راجع خطوات الحل للوصول إلى النتيجة الصحيحة.",
+      });
     });
   }
 
@@ -224,57 +177,83 @@ function createLessonFromSection(stage, section) {
    * الإنجليزية
    */
   if (section.part1) {
-    shortLessons.push({
-      id: `${section.subId}-part1`,
-      title: section.part1.title,
-      explanation: section.part1.description || "",
-      examples:
-        section.part1.items?.map(
-          (item) => `${item.char} — ${item.word}`
-        ) || [],
-    });
-
-    if (Array.isArray(section.part1.items)) {
-      section.part1.items.forEach((item, index) => {
-        activities.push({
-          id: `${section.subId}-english-activity-${index + 1}`,
-          type: "reading",
-          question: `ما الكلمة المرتبطة بالحرف ${item.char}؟`,
-          options: item.word ? [item.word] : [],
-          correctAnswer: item.word,
-          explanation: `الحرف ${item.char} مرتبط بالكلمة ${item.word}.`,
-        });
+    if (section.part1.title) {
+      shortLessons.push({
+        id: `${section.subId}-part1`,
+        title: section.part1.title,
+        explanation:
+          section.part1.description ||
+          "شرح مبسط للمهارة.",
+        examples: [],
       });
     }
 
-    if (Array.isArray(section.part1.topics)) {
-      shortLessons.push({
-        id: `${section.subId}-rules`,
-        title: "القواعد الأساسية",
-        explanation: section.part1.description || "",
-        examples: section.part1.topics.map(
-          (topic) =>
-            `${topic.rule}: ${topic.example}`
-        ),
+    if (Array.isArray(section.part1.items)) {
+      section.part1.items.forEach((item, index) => {
+        if (!item.char) return;
+
+        activities.push({
+          id: `${section.subId}-english-${index + 1}`,
+          type: "reading",
+          question: `اقرأ الحرف التالي: ${item.char}`,
+          correctAnswer: item.char,
+          explanation: item.word
+            ? `الحرف ${item.char}، ومن أمثلته كلمة ${item.word}.`
+            : `الحرف هو ${item.char}.`,
+        });
       });
     }
   }
 
   if (section.part2) {
-    shortLessons.push({
-      id: `${section.subId}-part2`,
-      title: section.part2.title,
-      explanation: section.part2.description || "",
-      examples:
-        section.part2.vocab?.flatMap((group) =>
-          (group.words || []).map(
-            (word) => `${group.category}: ${word}`
-          )
-        ) ||
-        (section.part2.content
-          ? [section.part2.content]
-          : []),
-    });
+    if (section.part2.title) {
+      shortLessons.push({
+        id: `${section.subId}-part2`,
+        title: section.part2.title,
+        explanation:
+          section.part2.description ||
+          "شرح مبسط للمهارة.",
+        examples: [],
+      });
+    }
+
+    if (Array.isArray(section.part2.topics)) {
+      section.part2.topics.forEach((topic, index) => {
+        shortLessons.push({
+          id: `${section.subId}-topic-${index + 1}`,
+          title: topic.rule,
+          explanation:
+            topic.example ||
+            "قاعدة أساسية في اللغة الإنجليزية.",
+          examples: [
+            topic.example || "",
+          ],
+        });
+      });
+    }
+
+    if (Array.isArray(section.part2.vocab)) {
+      section.part2.vocab.forEach((category, index) => {
+        shortLessons.push({
+          id: `${section.subId}-vocab-${index + 1}`,
+          title: category.category,
+          explanation:
+            "مجموعة من الكلمات الإنجليزية الشائعة.",
+          examples: Array.isArray(category.words)
+            ? category.words
+            : [],
+        });
+      });
+    }
+
+    if (section.part2.content) {
+      shortLessons.push({
+        id: `${section.subId}-content`,
+        title: "نص تدريبي",
+        explanation: section.part2.content,
+        examples: [],
+      });
+    }
   }
 
   /*
@@ -282,101 +261,69 @@ function createLessonFromSection(stage, section) {
    */
   if (Array.isArray(section.quizList)) {
     section.quizList.forEach((quiz, index) => {
-      const type =
+      let type = "multiple-choice";
+
+      if (
         quiz.type === "true-false" ||
-        quiz.type === "short-answer"
-          ? quiz.type
-          : "multiple-choice";
-
-      let correctAnswer = "";
-
-      if (type === "multiple-choice") {
-        correctAnswer =
-          quiz.options?.[quiz.correctIndex] ||
-          quiz.correctAnswer ||
-          "";
-      } else {
-        correctAnswer =
-          quiz.correctAnswer ??
-          quiz.answer ??
-          quiz.options?.[quiz.correctIndex] ??
-          "";
+        quiz.type === "true_false"
+      ) {
+        type = "true-false";
       }
 
-      assessmentQuestions.push({
-        id: `${section.subId}-assessment-${index + 1}`,
-        question: quiz.question || quiz.question_text || "",
-        type,
-        options:
+      if (
+        quiz.type === "short-answer" ||
+        quiz.type === "short_answer"
+      ) {
+        type = "short-answer";
+      }
+
+      const correctAnswer =
+        quiz.correctAnswer ??
+        quiz.correct_answer ??
+        (
+          typeof quiz.correctIndex === "number"
+            ? quiz.options?.[quiz.correctIndex]
+            : ""
+        );
+
+      activities.push({
+        id: `${section.subId}-quiz-activity-${index + 1}`,
+        type:
           type === "multiple-choice"
-            ? quiz.options || []
-            : type === "true-false"
-            ? ["صح", "خطأ"]
-            : [],
+            ? "choice"
+            : "reading",
+        question: quiz.question,
+        options: quiz.options || [],
         correctAnswer,
-        explanation: quiz.explanation || "",
+        explanation:
+          quiz.explanation ||
+          "راجع الإجابة والشرح.",
       });
     });
   }
 
   /*
-   * أهداف الدرس
+   * الأهداف التعليمية
    */
-  const objectives = [];
+  const objectives = [
+    `فهم أساسيات ${section.title}.`,
+    "تطبيق المهارة من خلال أنشطة تفاعلية.",
+    "التأكد من فهم الدرس من خلال أسئلة التقييم.",
+  ];
 
-  if (section.items?.some((item) => item.char)) {
-    objectives.push(
-      "التعرف على الحروف ونطقها بشكل صحيح."
-    );
-  }
-
-  if (section.items?.some((item) => item.word)) {
-    objectives.push(
-      "قراءة الكلمات وفهم معانيها."
-    );
-  }
-
-  if (section.items?.some((item) => item.steps)) {
-    objectives.push(
-      "تكوين الكلمات وترتيب حروفها."
-    );
-    objectives.push(
-      "كتابة الكلمات بصورة صحيحة."
-    );
-  }
-
-  if (
-    section.items?.some(
-      (item) => typeof item.number === "number"
-    )
-  ) {
-    objectives.push(
-      "التعرف على الأرقام وأسمائها وتمثيلها."
-    );
-  }
-
-  if (section.examples) {
-    objectives.push(
-      "فهم الفكرة من خلال أمثلة تطبيقية."
-    );
-  }
-
-  if (section.part1 || section.part2) {
-    objectives.push(
-      "اكتساب أساسيات الموضوع والتطبيق عليها."
-    );
-  }
-
-  if (objectives.length === 0) {
-    objectives.push(
-      "فهم المفاهيم الأساسية في هذا القسم."
-    );
-    objectives.push(
-      "التدرب على المهارات المرتبطة بالدرس."
-    );
-    objectives.push(
-      "الاستعداد للتقييم في نهاية الدرس."
-    );
+  if (activities.length === 0) {
+    activities.push({
+      id: `${section.subId}-info`,
+      type: "reading",
+      question:
+        section.description ||
+        `تعلم ${section.title}.`,
+      correctAnswer:
+        section.description ||
+        section.title,
+      explanation:
+        "هذا القسم يحتوي على المحتوى التعليمي الخاص بهذه المهارة.",
+    });
   }
 
   return {
@@ -384,7 +331,7 @@ function createLessonFromSection(stage, section) {
     title: section.title,
     introduction:
       section.description ||
-      "درس تعليمي تفاعلي يساعدك على فهم الموضوع والتدرب عليه.",
+      `درس تعليمي ضمن مرحلة ${stage.title}.`,
     objectives,
     shortLessons:
       shortLessons.length > 0
@@ -395,31 +342,67 @@ function createLessonFromSection(stage, section) {
               title: section.title,
               explanation:
                 section.description ||
-                "مقدمة للموضوع التعليمي.",
+                "شرح تعليمي مبسط.",
               examples: [],
             },
           ],
     activities,
-    assessmentQuestions,
+    assessmentQuestions:
+      Array.isArray(section.quizList)
+        ? section.quizList.map((quiz, index) => {
+            let type = "multiple-choice";
+
+            if (
+              quiz.type === "true-false" ||
+              quiz.type === "true_false"
+            ) {
+              type = "true-false";
+            }
+
+            if (
+              quiz.type === "short-answer" ||
+              quiz.type === "short_answer"
+            ) {
+              type = "short-answer";
+            }
+
+            const correctAnswer =
+              quiz.correctAnswer ??
+              quiz.correct_answer ??
+              (
+                typeof quiz.correctIndex === "number"
+                  ? quiz.options?.[quiz.correctIndex]
+                  : ""
+              );
+
+            return {
+              id: `${section.subId}-assessment-${index + 1}`,
+              question: quiz.question,
+              type,
+              options:
+                quiz.options || [],
+              correctAnswer,
+              explanation:
+                quiz.explanation ||
+                "راجع الإجابة الصحيحة.",
+            };
+          })
+        : [],
     reviewRecommendations: [
-      "أعد قراءة شرح الدرس.",
-      "راجع الأمثلة وحاول حلها بنفسك.",
-      "أعد الأنشطة التي أخطأت فيها.",
-      "جرّب التقييم مرة أخرى بعد المراجعة.",
+      "راجع الشرح مرة أخرى إذا أخطأت في أحد الأنشطة.",
+      "أعد حل الأسئلة التي لم تتمكن من الإجابة عنها.",
+      "انتقل إلى الدرس التالي بعد إتقان المهارة.",
     ],
   };
 }
 
 function ProgressBar({ value }) {
   return (
-    <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
       <div
-        className="h-2 bg-blue-600 rounded-full transition-all"
+        className="bg-blue-600 h-full transition-all"
         style={{
-          width: `${Math.max(
-            0,
-            Math.min(100, value)
-          )}%`,
+          width: `${Math.min(100, Math.max(0, value))}%`,
         }}
       />
     </div>
@@ -427,41 +410,57 @@ function ProgressBar({ value }) {
 }
 
 function Header({
+  title,
   currentUserEmail,
   isAdmin,
   onHome,
+  onExamCenter,
   onAdmin,
+  onChangeEmail,
 }) {
   return (
-    <header className="w-full max-w-5xl mb-6 bg-white rounded-2xl shadow-sm border p-4">
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+    <header className="w-full bg-white shadow-sm border-b">
+      <div
+        className="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3"
+        dir="rtl"
+      >
         <button
           onClick={onHome}
-          className="text-2xl font-black text-slate-800"
+          className="font-bold text-xl text-blue-700"
         >
-          لنتعلم 📚
+          لنتعلم
         </button>
 
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={onHome}
-            className="px-4 py-2 bg-slate-100 rounded-xl font-bold"
+            className="px-3 py-2 rounded-lg hover:bg-gray-100"
           >
             الرئيسية
+          </button>
+
+          <button
+            onClick={onExamCenter}
+            className="px-3 py-2 rounded-lg hover:bg-gray-100"
+          >
+            الاختبارات
           </button>
 
           {isAdmin && (
             <button
               onClick={onAdmin}
-              className="px-4 py-2 bg-yellow-400 rounded-xl font-bold"
+              className="px-3 py-2 rounded-lg hover:bg-gray-100"
             >
-              🔒 الإدارة
+              الإدارة
             </button>
           )}
 
-          <span className="px-4 py-2 bg-slate-800 text-white rounded-xl text-sm">
+          <button
+            onClick={onChangeEmail}
+            className="px-3 py-2 rounded-lg bg-gray-100"
+          >
             {currentUserEmail}
-          </span>
+          </button>
         </div>
       </div>
     </header>
@@ -470,129 +469,65 @@ function Header({
 
 function HomeScreen({
   stages,
-  onStage,
+  onSelectStage,
   onExamCenter,
 }) {
   return (
-    <main className="w-full max-w-5xl">
-      <section className="bg-white rounded-3xl shadow-sm border p-6 md:p-10 mb-6">
-        <div className="text-center">
-          <div className="text-5xl mb-4">
-            🎓
-          </div>
+    <main
+      className="max-w-6xl mx-auto px-4 py-8"
+      dir="rtl"
+    >
+      <section className="bg-white rounded-3xl shadow-sm p-8 mb-8 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
+          منصة لنتعلم التعليمية
+        </h1>
 
-          <h1 className="text-3xl md:text-4xl font-black text-slate-800 mb-4">
-            منصة لنتعلم التعليمية
-          </h1>
+        <p className="text-gray-600 text-lg">
+          تعلم بطريقة تفاعلية ومنظمة
+        </p>
 
-          <p className="text-slate-600 text-lg leading-8 max-w-2xl mx-auto">
-            تعلم خطوة بخطوة من خلال الدروس القصيرة والأنشطة
-            والتقييمات والاختبارات.
-          </p>
+        <button
+          onClick={onExamCenter}
+          className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
+        >
+          مركز الاختبارات
+        </button>
+      </section>
 
+      <div className="grid md:grid-cols-2 gap-6">
+        {stages.map((stage) => (
           <button
-            onClick={() => {
-              document
-                .getElementById("educational-stages")
-                ?.scrollIntoView({
-                  behavior: "smooth",
-                });
-            }}
-            className="mt-6 px-7 py-3 bg-blue-600 text-white rounded-xl font-black"
+            key={stage.stageId}
+            onClick={() => onSelectStage(stage)}
+            className="text-right bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition"
           >
-            ابدأ التعلم
-          </button>
-        </div>
-      </section>
+            <div className="text-4xl mb-4">
+              {getStageIcon(stage.icon)}
+            </div>
 
-      <section className="grid md:grid-cols-3 gap-4 mb-8">
-        <InfoCard
-          icon="📖"
-          title="دروس قصيرة"
-          text="تعلم المفاهيم بطريقة مبسطة."
-        />
-
-        <InfoCard
-          icon="✏️"
-          title="أنشطة تفاعلية"
-          text="طبّق ما تعلمته مباشرة."
-        />
-
-        <InfoCard
-          icon="📊"
-          title="تقييم ونتيجة"
-          text="اختبر فهمك وتعرف على أخطائك."
-        />
-      </section>
-
-      <section id="educational-stages">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-black text-slate-800">
-            المراحل التعليمية
-          </h2>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          {stages.map((stage) => (
-            <button
-              key={stage.stageId}
-              onClick={() => onStage(stage)}
-              className="text-right bg-white border rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-blue-300 transition"
-            >
-              <div className="text-3xl mb-3">
-                {getStageIcon(stage.stageId)}
-              </div>
-
-              <h3 className="text-xl font-black text-slate-800 mb-2">
-                {stage.title}
-              </h3>
-
-              <p className="text-sm text-slate-500">
-                {stage.subSections?.length || 0} أقسام تعليمية
-              </p>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="mt-8 bg-indigo-50 border border-indigo-100 rounded-2xl p-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-black text-indigo-900">
-              القدرات والتحصيلي
+            <h2 className="text-xl font-bold mb-2">
+              {stage.title}
             </h2>
 
-            <p className="text-indigo-700 mt-1">
-              انتقل إلى الاختبارات المتوفرة حاليًا في بيانات المشروع.
+            <p className="text-gray-600">
+              {stage.subSections?.length || 0} أقسام تعليمية
             </p>
-          </div>
-
-          <button
-            onClick={onExamCenter}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-black"
-          >
-            مركز الاختبارات
           </button>
-        </div>
-      </section>
+        ))}
+      </div>
     </main>
   );
 }
 
-function InfoCard({ icon, title, text }) {
+function InfoCard({ title, children }) {
   return (
-    <div className="bg-white border rounded-2xl p-5">
-      <div className="text-3xl mb-3">
-        {icon}
-      </div>
-
-      <h3 className="font-black text-slate-800">
+    <div className="bg-white rounded-2xl shadow-sm p-5">
+      <h3 className="font-bold text-lg mb-3">
         {title}
       </h3>
-
-      <p className="text-sm text-slate-500 mt-1">
-        {text}
-      </p>
+      <div className="text-gray-700">
+        {children}
+      </div>
     </div>
   );
 }
@@ -600,112 +535,85 @@ function InfoCard({ icon, title, text }) {
 function StageScreen({
   stage,
   onBack,
-  onLesson,
+  onSelectLesson,
+  subscriptionRequested,
+  onRequestSubscription,
 }) {
   const lessons = useMemo(
     () =>
       (stage.subSections || [])
-        .filter(
-          (section) =>
-            section.subId !== "tests"
-        )
+        .filter((section) => section.subId !== "tests")
         .map((section) =>
-          createLessonFromSection(
-            stage,
-            section
-          )
+          createLessonFromSection(stage, section)
         ),
     [stage]
   );
 
-  const testSections =
-    (stage.subSections || []).filter(
-      (section) =>
-        section.subId === "tests"
-    );
-
   return (
-    <main className="w-full max-w-5xl">
+    <main
+      className="max-w-6xl mx-auto px-4 py-8"
+      dir="rtl"
+    >
       <button
         onClick={onBack}
-        className="mb-4 px-4 py-2 bg-white border rounded-xl font-bold"
+        className="mb-6 px-4 py-2 bg-gray-100 rounded-lg"
       >
-        ← العودة للرئيسية
+        ← العودة
       </button>
 
-      <section className="bg-white border rounded-3xl shadow-sm p-6 md:p-8 mb-6">
-        <div className="text-4xl mb-3">
-          {getStageIcon(stage.stageId)}
-        </div>
-
-        <h1 className="text-3xl font-black text-slate-800">
+      <div className="bg-white rounded-3xl shadow-sm p-6 mb-6">
+        <h1 className="text-3xl font-bold mb-3">
           {stage.title}
         </h1>
 
-        <p className="text-slate-500 mt-2">
-          اختر الدرس الذي تريد البدء به.
+        <p className="text-gray-600">
+          اختر أحد الدروس للبدء.
         </p>
-      </section>
 
-      <div className="grid md:grid-cols-2 gap-4">
-        {lessons.map((lesson, index) => (
+        <div className="mt-5">
+          <button
+            onClick={onRequestSubscription}
+            disabled={subscriptionRequested}
+            className="px-5 py-3 bg-amber-500 text-white rounded-xl disabled:opacity-60"
+          >
+            {subscriptionRequested
+              ? "تم إرسال طلب الاشتراك"
+              : "طلب الاشتراك"}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-5">
+        {lessons.map((lesson) => (
           <button
             key={lesson.id}
-            onClick={() => onLesson(lesson)}
-            className="text-right bg-white border rounded-2xl p-5 shadow-sm hover:border-blue-400 hover:shadow-md transition"
+            onClick={() => onSelectLesson(lesson)}
+            className="text-right bg-white rounded-2xl shadow-sm p-6 hover:shadow-md transition"
           >
-            <span className="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-black mb-3">
-              الدرس {index + 1}
-            </span>
-
-            <h2 className="text-xl font-black text-slate-800">
+            <h2 className="text-xl font-bold mb-3">
               {lesson.title}
             </h2>
 
-            <p className="text-sm text-slate-500 mt-2 line-clamp-2">
+            <p className="text-gray-600 mb-4">
               {lesson.introduction}
             </p>
 
-            <div className="mt-4 text-sm text-blue-600 font-bold">
-              فتح الدرس ←
+            <div className="flex gap-2 flex-wrap text-sm">
+              <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
+                {lesson.shortLessons.length} دروس قصيرة
+              </span>
+
+              <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full">
+                {lesson.activities.length} أنشطة
+              </span>
+
+              <span className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full">
+                {lesson.assessmentQuestions.length} تقييم
+              </span>
             </div>
           </button>
         ))}
       </div>
-
-      {testSections.length > 0 && (
-        <section className="mt-6 bg-green-50 border border-green-200 rounded-2xl p-5">
-          <h2 className="font-black text-green-900 mb-2">
-            📝 اختبار المرحلة
-          </h2>
-
-          {testSections.map((section) => (
-            <div key={section.subId}>
-              <p className="text-sm text-green-800">
-                {section.description ||
-                  "اختبار المرحلة متاح للتدريب."}
-              </p>
-
-              {section.quizList?.map(
-                (quiz, index) => (
-                  <div
-                    key={index}
-                    className="mt-4 bg-white rounded-xl border p-4"
-                  >
-                    <p className="font-bold text-slate-800">
-                      {quiz.question}
-                    </p>
-
-                    <p className="text-xs text-slate-500 mt-2">
-                      سؤال تقييم موجود ضمن بيانات المرحلة.
-                    </p>
-                  </div>
-                )
-              )}
-            </div>
-          ))}
-        </section>
-      )}
     </main>
   );
 }
@@ -713,627 +621,285 @@ function StageScreen({
 function LessonScreen({
   lesson,
   onBack,
-  onAssessment,
 }) {
-  const [
-    activityAnswers,
-    setActivityAnswers,
-  ] = useState({});
-
-  const [
-    writingValues,
-    setWritingValues,
-  ] = useState({});
-
-  const [
-    orderingValues,
-    setOrderingValues,
-  ] = useState({});
-
-  const completedActivities =
-    lesson.activities.filter(
-      (activity) =>
-        activityAnswers[activity.id] !==
-        undefined
-    ).length;
-
-  const progress =
-    lesson.activities.length === 0
-      ? 0
-      : Math.round(
-          (completedActivities /
-            lesson.activities.length) *
-            100
-        );
-
-  function checkActivity(
-    activity,
-    answer
-  ) {
-    setActivityAnswers((prev) => ({
-      ...prev,
-      [activity.id]: answer,
-    }));
-  }
-
-  function updateOrdering(
-    activityId,
-    value
-  ) {
-    setOrderingValues((prev) => ({
-      ...prev,
-      [activityId]: value,
-    }));
-  }
-
-  function resetActivity(activity) {
-    setActivityAnswers((prev) => {
-      const next = { ...prev };
-      delete next[activity.id];
-      return next;
-    });
-
-    setOrderingValues((prev) => {
-      const next = { ...prev };
-      delete next[activity.id];
-      return next;
-    });
-  }
-
   return (
-    <main className="w-full max-w-4xl">
+    <main
+      className="max-w-5xl mx-auto px-4 py-8"
+      dir="rtl"
+    >
       <button
         onClick={onBack}
-        className="mb-4 px-4 py-2 bg-white border rounded-xl font-bold"
+        className="mb-6 px-4 py-2 bg-gray-100 rounded-lg"
       >
-        ← العودة للقسم
+        ← العودة
       </button>
 
-      <section className="bg-white border rounded-3xl shadow-sm p-6 md:p-8">
-        <span className="inline-block bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-black">
-          درس تعليمي
-        </span>
+      <div className="space-y-6">
+        <section className="bg-white rounded-3xl shadow-sm p-7">
+          <h1 className="text-3xl font-bold mb-4">
+            {lesson.title}
+          </h1>
 
-        <h1 className="text-3xl font-black text-slate-800 mt-3">
-          {lesson.title}
-        </h1>
-
-        <div className="mt-5 bg-slate-50 rounded-2xl p-5">
-          <h2 className="font-black text-lg mb-2">
-            مقدمة الدرس
-          </h2>
-
-          <p className="text-slate-600 leading-8">
+          <p className="text-gray-700 leading-8">
             {lesson.introduction}
           </p>
-        </div>
+        </section>
 
-        <div className="mt-5">
-          <h2 className="font-black text-lg mb-3">
-            🎯 أهداف التعلم
-          </h2>
-
-          <ul className="space-y-2">
-            {lesson.objectives.map(
-              (objective, index) => (
-                <li
-                  key={index}
-                  className="bg-blue-50 text-blue-900 rounded-xl p-3"
-                >
-                  ✓ {objective}
-                </li>
-              )
-            )}
+        <InfoCard title="الأهداف التعليمية">
+          <ul className="list-disc pr-6 space-y-2">
+            {lesson.objectives.map((objective) => (
+              <li key={objective}>{objective}</li>
+            ))}
           </ul>
-        </div>
+        </InfoCard>
 
-        <div className="mt-8">
-          <h2 className="text-2xl font-black text-slate-800 mb-4">
-            📚 الدروس القصيرة
+        <section>
+          <h2 className="text-2xl font-bold mb-4">
+            الدروس القصيرة
           </h2>
 
           <div className="space-y-4">
-            {lesson.shortLessons.map(
-              (shortLesson) => (
-                <article
-                  key={shortLesson.id}
-                  className="border rounded-2xl p-5"
-                >
-                  <h3 className="text-xl font-black text-slate-800">
-                    {shortLesson.title}
-                  </h3>
+            {lesson.shortLessons.map((item) => (
+              <InfoCard
+                key={item.id}
+                title={item.title}
+              >
+                <p className="leading-8 mb-3">
+                  {item.explanation}
+                </p>
 
-                  <p className="text-slate-600 leading-8 mt-2">
-                    {shortLesson.explanation}
-                  </p>
+                {item.examples?.length > 0 && (
+                  <div className="space-y-2">
+                    <strong>أمثلة:</strong>
 
-                  {shortLesson.examples
-                    .length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="font-black mb-2">
-                        أمثلة
-                      </h4>
-
-                      <div className="grid gap-2">
-                        {shortLesson.examples.map(
-                          (example, index) => (
-                            <div
-                              key={index}
-                              className="bg-slate-50 border rounded-xl p-3"
-                            >
-                              {example}
-                            </div>
-                          )
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </article>
-              )
-            )}
+                    {item.examples.map(
+                      (example, index) => (
+                        <div
+                          key={`${item.id}-${index}`}
+                          className="bg-gray-50 p-3 rounded-lg"
+                        >
+                          {example}
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+              </InfoCard>
+            ))}
           </div>
-        </div>
+        </section>
 
-        {lesson.activities.length > 0 && (
-          <div className="mt-8">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-2xl font-black">
-                ✏️ أنشطة تفاعلية
-              </h2>
-
-              <span className="text-sm font-bold text-slate-500">
-                {completedActivities}/
-                {lesson.activities.length}
-              </span>
-            </div>
-
-            <ProgressBar value={progress} />
-
-            <div className="space-y-5 mt-5">
-              {lesson.activities.map(
-                (activity, index) => (
-                  <ActivityCard
-                    key={activity.id}
-                    activity={activity}
-                    index={index}
-                    answer={
-                      activityAnswers[
-                        activity.id
-                      ]
-                    }
-                    writingValue={
-                      writingValues[
-                        activity.id
-                      ] || ""
-                    }
-                    orderingValue={
-                      orderingValues[
-                        activity.id
-                      ] || []
-                    }
-                    onAnswer={(answer) =>
-                      checkActivity(
-                        activity,
-                        answer
-                      )
-                    }
-                    onWriting={(value) =>
-                      setWritingValues(
-                        (prev) => ({
-                          ...prev,
-                          [activity.id]:
-                            value,
-                        })
-                      )
-                    }
-                    onOrderingChange={(
-                      value
-                    ) =>
-                      updateOrdering(
-                        activity.id,
-                        value
-                      )
-                    }
-                    onReset={() =>
-                      resetActivity(activity)
-                    }
-                  />
-                )
-              )}
-            </div>
-          </div>
-        )}
-
-        {lesson.assessmentQuestions.length >
-          0 && (
-          <section className="mt-8 bg-indigo-50 border border-indigo-100 rounded-2xl p-6">
-            <h2 className="text-2xl font-black text-indigo-900">
-              📝 تقييم الدرس
-            </h2>
-
-            <p className="text-indigo-700 mt-2 mb-4">
-              بعد مراجعة الدرس والأنشطة، ابدأ التقييم.
-            </p>
-
-            <button
-              onClick={onAssessment}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-black"
-            >
-              ابدأ التقييم
-            </button>
-          </section>
-        )}
-
-        <section className="mt-8 bg-amber-50 border border-amber-200 rounded-2xl p-5">
-          <h2 className="font-black text-amber-900 mb-3">
-            🔄 توصيات المراجعة
+        <section>
+          <h2 className="text-2xl font-bold mb-4">
+            الأنشطة
           </h2>
 
-          <ul className="space-y-2 text-amber-800">
+          <div className="space-y-4">
+            {lesson.activities.map((activity) => (
+              <ActivityCard
+                key={activity.id}
+                activity={activity}
+              />
+            ))}
+          </div>
+        </section>
+
+        {lesson.assessmentQuestions.length > 0 && (
+          <div className="bg-blue-50 rounded-2xl p-5">
+            <h2 className="text-xl font-bold mb-2">
+              التقييم
+            </h2>
+
+            <p>
+              يوجد {lesson.assessmentQuestions.length} سؤال
+              للتأكد من فهمك للدرس.
+            </p>
+          </div>
+        )}
+
+        <InfoCard title="توصيات المراجعة">
+          <ul className="list-disc pr-6 space-y-2">
             {lesson.reviewRecommendations.map(
-              (recommendation, index) => (
-                <li key={index}>
-                  • {recommendation}
+              (recommendation) => (
+                <li key={recommendation}>
+                  {recommendation}
                 </li>
               )
             )}
           </ul>
-        </section>
-      </section>
+        </InfoCard>
+      </div>
     </main>
   );
 }
 
-function ActivityCard({
-  activity,
-  index,
-  answer,
-  writingValue,
-  orderingValue,
-  onAnswer,
-  onWriting,
-  onOrderingChange,
-  onReset,
-}) {
-  const isAnswered = answer !== undefined;
+function ActivityCard({ activity }) {
+  const [answer, setAnswer] = useState("");
+  const [checked, setChecked] = useState(false);
 
-  const correct = isAnswered
-    ? answersAreEqual(
-        answer,
-        activity.correctAnswer
-      )
-    : false;
+  const correct = answersAreEqual(
+    answer,
+    activity.correctAnswer
+  );
 
-  function handleOrderingOption(option) {
-    if (isAnswered) return;
+  const isOrdering =
+    activity.type === "ordering" &&
+    Array.isArray(activity.correctAnswer);
 
-    if (orderingValue.includes(option)) {
+  const orderingOptions = isOrdering
+    ? activity.correctAnswer
+    : [];
+
+  function handleOptionClick(option) {
+    if (isOrdering) {
+      setAnswer((previous) => {
+        const current = Array.isArray(previous)
+          ? previous
+          : [];
+
+        if (current.includes(option)) {
+          return current;
+        }
+
+        return [...current, option];
+      });
+
       return;
     }
 
-    const next = [
-      ...orderingValue,
-      option,
-    ];
-
-    onOrderingChange(next);
+    setAnswer(option);
+    setChecked(false);
   }
 
-  function removeOrderingOption(
-    optionIndex
-  ) {
-    if (isAnswered) return;
-
-    const next = orderingValue.filter(
-      (_, index) =>
-        index !== optionIndex
-    );
-
-    onOrderingChange(next);
-  }
-
-  function submitOrdering() {
-    if (
-      orderingValue.length !==
-      activity.options.length
-    ) {
-      return;
-    }
-
-    onAnswer(orderingValue);
+  function resetOrdering() {
+    setAnswer([]);
+    setChecked(false);
   }
 
   return (
-    <div className="border rounded-2xl p-5 bg-white">
+    <div className="bg-white rounded-2xl shadow-sm p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
-        <h3 className="font-black">
-          نشاط {index + 1}
-        </h3>
-
-        <span className="text-xs bg-slate-100 px-2 py-1 rounded-full">
+        <h3 className="font-bold">
           {LESSON_TYPES[activity.type] ||
             activity.type}
-        </span>
+        </h3>
       </div>
 
-      <p className="font-bold text-slate-800 leading-7">
+      <p className="text-lg mb-4">
         {activity.question}
       </p>
 
-      {/*
-       * الكتابة
-       */}
-      {activity.type === "writing" && (
-        <div className="mt-4">
-          <input
-            value={writingValue}
-            disabled={isAnswered}
-            onChange={(e) =>
-              onWriting(e.target.value)
-            }
-            onKeyDown={(e) => {
-              if (
-                e.key === "Enter" &&
-                writingValue.trim()
-              ) {
-                onAnswer(writingValue);
-              }
-            }}
-            placeholder="اكتب إجابتك هنا"
-            className="w-full border rounded-xl p-3 text-right disabled:bg-slate-100"
-          />
-
-          <button
-            disabled={
-              !writingValue.trim() ||
-              isAnswered
-            }
-            onClick={() =>
-              onAnswer(writingValue)
-            }
-            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold disabled:opacity-40"
-          >
-            تحقق
-          </button>
-        </div>
-      )}
-
-      {/*
-       * الحساب
-       */}
-      {activity.type === "calculation" && (
-        <div className="mt-4">
-          <input
-            value={writingValue}
-            disabled={isAnswered}
-            inputMode="decimal"
-            onChange={(e) =>
-              onWriting(e.target.value)
-            }
-            onKeyDown={(e) => {
-              if (
-                e.key === "Enter" &&
-                writingValue.trim()
-              ) {
-                onAnswer(writingValue);
-              }
-            }}
-            placeholder="اكتب الناتج"
-            className="w-full border rounded-xl p-3 text-right disabled:bg-slate-100"
-          />
-
-          <button
-            disabled={
-              !writingValue.trim() ||
-              isAnswered
-            }
-            onClick={() =>
-              onAnswer(writingValue)
-            }
-            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold disabled:opacity-40"
-          >
-            تحقق من الناتج
-          </button>
-        </div>
-      )}
-
-      {/*
-       * الترتيب
-       */}
-      {activity.type === "ordering" &&
-        activity.options?.length > 0 && (
-          <div className="mt-4">
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-              <p className="font-black text-blue-900 mb-3">
-                ترتيبك الحالي:
-              </p>
-
-              {orderingValue.length === 0 ? (
-                <p className="text-sm text-blue-700">
-                  اختر الحروف بالترتيب.
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {orderingValue.map(
-                    (option, optionIndex) => (
-                      <button
-                        key={`${option}-${optionIndex}`}
-                        onClick={() =>
-                          removeOrderingOption(
-                            optionIndex
-                          )
-                        }
-                        className="px-4 py-2 bg-white border border-blue-200 rounded-xl font-black"
-                        title="اضغط لإزالة العنصر"
-                      >
-                        {optionIndex + 1}.{" "}
-                        {option}
-                      </button>
-                    )
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
-              {activity.options.map(
-                (option, optionIndex) => {
-                  const selected =
-                    orderingValue.includes(
-                      option
-                    );
-
-                  return (
-                    <button
-                      key={`${option}-${optionIndex}`}
-                      disabled={
-                        isAnswered || selected
-                      }
-                      onClick={() =>
-                        handleOrderingOption(
-                          option
-                        )
-                      }
-                      className={`p-3 rounded-xl border font-black transition ${
-                        selected
-                          ? "bg-slate-200 text-slate-400"
-                          : "bg-slate-50 hover:bg-blue-50 hover:border-blue-300"
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  );
-                }
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-2 mt-3">
-              <button
-                disabled={
-                  isAnswered ||
-                  orderingValue.length !==
-                    activity.options.length
-                }
-                onClick={submitOrdering}
-                className="px-5 py-2 bg-blue-600 text-white rounded-xl font-bold disabled:opacity-40"
-              >
-                تحقق من الترتيب
-              </button>
-
-              {!isAnswered &&
-                orderingValue.length >
-                  0 && (
-                  <button
-                    onClick={() =>
-                      onOrderingChange([])
-                    }
-                    className="px-5 py-2 bg-slate-200 rounded-xl font-bold"
-                  >
-                    إعادة الترتيب
-                  </button>
-                )}
-            </div>
-          </div>
-        )}
-
-      {/*
-       * الاختيار والقراءة والمطابقة
-       */
-      {(activity.type === "choice" ||
-        activity.type === "reading" ||
-        activity.type === "matching") &&
-        activity.options &&
+      {Array.isArray(activity.options) &&
         activity.options.length > 0 && (
-          <div className="grid gap-2 mt-4">
-            {activity.options.map(
-              (option, optionIndex) => {
-                const selected =
-                  normalizeAnswer(answer) ===
-                  normalizeAnswer(option);
-
-                return (
-                  <button
-                    key={optionIndex}
-                    disabled={isAnswered}
-                    onClick={() =>
-                      onAnswer(option)
-                    }
-                    className={`text-right p-3 rounded-xl border transition ${
-                      selected
-                        ? "bg-blue-100 border-blue-400"
-                        : "bg-slate-50 hover:bg-slate-100"
-                    }`}
-                  >
-                    {option}
-                  </button>
-                );
-              }
-            )}
+          <div className="grid gap-2">
+            {activity.options.map((option, index) => (
+              <button
+                key={`${activity.id}-${index}`}
+                onClick={() =>
+                  handleOptionClick(option)
+                }
+                className={`text-right p-3 rounded-xl border transition ${
+                  answer === option
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                {option}
+              </button>
+            ))}
           </div>
         )}
 
-      {/*
-       * في حالة القراءة التي لا تحتوي خيارات
-       */
-      {activity.type === "reading" &&
-        (!activity.options ||
-          activity.options.length === 0) && (
-          <div className="mt-4">
-            <button
-              disabled={isAnswered}
-              onClick={() =>
-                onAnswer(
-                  activity.correctAnswer
-                )
-              }
-              className="px-5 py-3 bg-blue-600 text-white rounded-xl font-bold disabled:opacity-40"
-            >
-              إظهار الإجابة
-            </button>
+      {isOrdering && (
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {orderingOptions.map((option, index) => (
+              <button
+                key={`${activity.id}-order-${index}`}
+                onClick={() =>
+                  handleOptionClick(option)
+                }
+                className="px-4 py-2 bg-gray-100 rounded-lg"
+              >
+                {option}
+              </button>
+            ))}
           </div>
+
+          <div className="p-3 bg-gray-50 rounded-xl min-h-12">
+            {Array.isArray(answer)
+              ? answer.join(" → ")
+              : ""}
+          </div>
+
+          <button
+            onClick={resetOrdering}
+            className="px-4 py-2 bg-gray-100 rounded-lg"
+          >
+            إعادة الترتيب
+          </button>
+        </div>
+      )}
+
+      {!activity.options?.length &&
+        !isOrdering && (
+          <input
+            value={
+              Array.isArray(answer)
+                ? answer.join(" ")
+                : answer
+            }
+            onChange={(event) =>
+              setAnswer(event.target.value)
+            }
+            placeholder="اكتب إجابتك هنا"
+            className="w-full border rounded-xl p-3"
+          />
         )}
 
-      {isAnswered && (
+      <button
+        onClick={() => setChecked(true)}
+        disabled={
+          Array.isArray(answer)
+            ? answer.length === 0
+            : !String(answer).trim()
+        }
+        className="mt-4 px-5 py-2 bg-blue-600 text-white rounded-xl disabled:opacity-40"
+      >
+        تحقق من الإجابة
+      </button>
+
+      {checked && (
         <div
-          className={`mt-4 rounded-xl p-4 ${
+          className={`mt-4 p-4 rounded-xl ${
             correct
               ? "bg-green-50 text-green-800"
               : "bg-red-50 text-red-800"
           }`}
         >
-          <p className="font-black">
+          <p className="font-bold">
             {correct
-              ? "✓ إجابة صحيحة"
-              : "✗ تحتاج إلى مراجعة"}
+              ? "إجابة صحيحة ✓"
+              : "الإجابة غير صحيحة"}
           </p>
 
-          {!correct && (
-            <p className="mt-2 text-sm">
-              <strong>
-                الإجابة الصحيحة:
-              </strong>{" "}
-              {Array.isArray(
-                activity.correctAnswer
-              )
-                ? activity.correctAnswer.join(
-                    " ← "
-                  )
-                : activity.correctAnswer}
-            </p>
-          )}
-
           {activity.explanation && (
-            <p className="mt-1 text-sm">
+            <p className="mt-2">
               {activity.explanation}
             </p>
           )}
 
-          <button
-            onClick={onReset}
-            className="mt-3 px-4 py-2 bg-white border rounded-xl text-sm font-bold"
-          >
-            إعادة النشاط
-          </button>
+          {!correct &&
+            activity.correctAnswer && (
+              <p className="mt-2">
+                الإجابة الصحيحة:{" "}
+                {Array.isArray(
+                  activity.correctAnswer
+                )
+                  ? activity.correctAnswer.join(" → ")
+                  : activity.correctAnswer}
+              </p>
+            )}
         </div>
       )}
     </div>
@@ -1345,8 +911,7 @@ function AssessmentScreen({
   onBack,
   onFinish,
 }) {
-  const questions =
-    lesson.assessmentQuestions;
+  const questions = lesson.assessmentQuestions || [];
 
   const [currentIndex, setCurrentIndex] =
     useState(0);
@@ -1356,290 +921,281 @@ function AssessmentScreen({
   const [submitted, setSubmitted] =
     useState(false);
 
-  const currentQuestion =
-    questions[currentIndex];
+  const [score, setScore] = useState(0);
 
-  function selectAnswer(answer) {
-    if (submitted) return;
+  if (questions.length === 0) {
+    return (
+      <main
+        className="max-w-3xl mx-auto px-4 py-8"
+        dir="rtl"
+      >
+        <button
+          onClick={onBack}
+          className="mb-6 px-4 py-2 bg-gray-100 rounded-lg"
+        >
+          ← العودة
+        </button>
 
-    setAnswers((prev) => ({
-      ...prev,
-      [currentQuestion.id]: answer,
+        <div className="bg-white rounded-2xl shadow-sm p-7 text-center">
+          <h1 className="text-2xl font-bold mb-3">
+            لا يوجد تقييم لهذا الدرس حاليًا
+          </h1>
+
+          <p className="text-gray-600">
+            يمكنك متابعة الأنشطة التعليمية.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  const question = questions[currentIndex];
+
+  function saveAnswer(value) {
+    setAnswers((previous) => ({
+      ...previous,
+      [question.id]: value,
     }));
   }
 
-  function finish() {
+  function isProvided(value) {
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+
+    return String(value ?? "").trim().length > 0;
+  }
+
+  function nextQuestion() {
     if (
-      answers[currentQuestion.id] ===
-      undefined
+      !isProvided(answers[question.id])
     ) {
       return;
     }
 
-    setSubmitted(true);
+    if (
+      currentIndex <
+      questions.length - 1
+    ) {
+      setCurrentIndex((index) => index + 1);
+    } else {
+      let finalScore = 0;
 
-    let score = 0;
+      questions.forEach((item) => {
+        if (
+          answersAreEqual(
+            answers[item.id],
+            item.correctAnswer
+          )
+        ) {
+          finalScore += 1;
+        }
+      });
 
-    questions.forEach((question) => {
-      if (
-        answersAreEqual(
-          answers[question.id],
-          question.correctAnswer
-        )
-      ) {
-        score++;
-      }
-    });
-
-    onFinish(score, questions.length);
+      setScore(finalScore);
+      setSubmitted(true);
+    }
   }
 
-  const hasAnswer =
-    answers[currentQuestion.id] !==
-    undefined;
+  if (submitted) {
+    const percentage = Math.round(
+      (score / questions.length) * 100
+    );
+
+    return (
+      <main
+        className="max-w-3xl mx-auto px-4 py-8"
+        dir="rtl"
+      >
+        <div className="bg-white rounded-3xl shadow-sm p-8 text-center">
+          <h1 className="text-3xl font-bold mb-4">
+            نتيجة التقييم
+          </h1>
+
+          <div className="text-5xl font-bold text-blue-600 mb-4">
+            {percentage}%
+          </div>
+
+          <p className="text-gray-600 mb-6">
+            حصلت على {score} من{" "}
+            {questions.length}
+          </p>
+
+          <button
+            onClick={() => onFinish(score)}
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl"
+          >
+            إنهاء
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  const currentAnswer =
+    answers[question.id] ?? "";
 
   return (
-    <main className="w-full max-w-3xl">
+    <main
+      className="max-w-3xl mx-auto px-4 py-8"
+      dir="rtl"
+    >
       <button
         onClick={onBack}
-        className="mb-4 px-4 py-2 bg-white border rounded-xl font-bold"
+        className="mb-6 px-4 py-2 bg-gray-100 rounded-lg"
       >
-        ← العودة للدرس
+        ← العودة
       </button>
 
-      <section className="bg-white border rounded-3xl shadow-sm p-6 md:p-8">
-        <div className="flex justify-between items-center mb-5">
-          <span className="font-black text-slate-700">
-            تقييم: {lesson.title}
-          </span>
+      <div className="bg-white rounded-3xl shadow-sm p-7">
+        <div className="mb-6">
+          <ProgressBar
+            value={
+              ((currentIndex + 1) /
+                questions.length) *
+              100
+            }
+          />
 
-          <span className="text-sm text-slate-500">
+          <p className="text-sm text-gray-500 mt-2">
             السؤال {currentIndex + 1} من{" "}
             {questions.length}
-          </span>
+          </p>
         </div>
 
-        <ProgressBar
-          value={
-            ((currentIndex + 1) /
-              questions.length) *
-            100
-          }
-        />
-
-        <h1 className="text-xl md:text-2xl font-black text-slate-800 mt-6 leading-9">
-          {currentQuestion.question}
+        <h1 className="text-2xl font-bold mb-6">
+          {question.question}
         </h1>
 
-        {currentQuestion.type ===
+        {question.type ===
           "multiple-choice" && (
-          <div className="grid gap-3 mt-6">
-            {(
-              currentQuestion.options ||
-              []
-            ).map((option, index) => {
-              const selected =
-                answers[
-                  currentQuestion.id
-                ] === option;
-
-              return (
+          <div className="grid gap-3">
+            {(question.options || []).map(
+              (option, index) => (
                 <button
-                  key={index}
-                  disabled={submitted}
+                  key={`${question.id}-${index}`}
                   onClick={() =>
-                    selectAnswer(option)
+                    saveAnswer(option)
                   }
-                  className={`text-right p-4 rounded-xl border font-bold ${
-                    selected
-                      ? "bg-blue-100 border-blue-500"
-                      : "bg-slate-50 hover:bg-slate-100"
+                  className={`text-right p-4 rounded-xl border ${
+                    currentAnswer === option
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:bg-gray-50"
                   }`}
                 >
                   {option}
                 </button>
-              );
-            })}
-          </div>
-        )}
-
-        {currentQuestion.type ===
-          "true-false" && (
-          <div className="grid grid-cols-2 gap-3 mt-6">
-            {["صح", "خطأ"].map(
-              (option) => {
-                const selected =
-                  answers[
-                    currentQuestion.id
-                  ] === option;
-
-                return (
-                  <button
-                    key={option}
-                    disabled={submitted}
-                    onClick={() =>
-                      selectAnswer(option)
-                    }
-                    className={`p-4 rounded-xl border font-black ${
-                      selected
-                        ? "bg-blue-100 border-blue-500"
-                        : "bg-slate-50 hover:bg-slate-100"
-                    }`}
-                  >
-                    {option}
-                  </button>
-                );
-              }
+              )
             )}
           </div>
         )}
 
-        {currentQuestion.type ===
+        {question.type ===
+          "true-false" && (
+          <div className="grid grid-cols-2 gap-3">
+            {["صح", "خطأ"].map(
+              (option) => (
+                <button
+                  key={option}
+                  onClick={() =>
+                    saveAnswer(option)
+                  }
+                  className={`p-4 rounded-xl border ${
+                    currentAnswer === option
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200"
+                  }`}
+                >
+                  {option}
+                </button>
+              )
+            )}
+          </div>
+        )}
+
+        {question.type ===
           "short-answer" && (
-          <div className="mt-6">
-            <input
-              disabled={submitted}
-              value={
-                answers[
-                  currentQuestion.id
-                ] || ""
-              }
-              onChange={(e) =>
-                selectAnswer(
-                  e.target.value
-                )
-              }
-              placeholder="اكتب إجابتك"
-              className="w-full border rounded-xl p-4 text-right"
-            />
-          </div>
-        )}
-
-        {submitted && (
-          <div className="mt-5 bg-slate-50 border rounded-xl p-4">
-            <p className="font-black">
-              الإجابة الصحيحة:{" "}
-              {Array.isArray(
-                currentQuestion.correctAnswer
-              )
-                ? currentQuestion.correctAnswer.join(
-                    "، "
-                  )
-                : currentQuestion.correctAnswer}
-            </p>
-
-            <p className="text-sm text-slate-600 mt-1">
-              {currentQuestion.explanation}
-            </p>
-          </div>
-        )}
-
-        <div className="flex justify-between gap-3 mt-8">
-          <button
-            disabled={currentIndex === 0}
-            onClick={() =>
-              setCurrentIndex((prev) =>
-                Math.max(0, prev - 1)
-              )
+          <input
+            value={currentAnswer}
+            onChange={(event) =>
+              saveAnswer(event.target.value)
             }
-            className="px-5 py-3 bg-slate-200 rounded-xl font-bold disabled:opacity-40"
-          >
-            السابق
-          </button>
+            placeholder="اكتب إجابتك"
+            className="w-full border rounded-xl p-4"
+          />
+        )}
 
-          {currentIndex <
-          questions.length - 1 ? (
-            <button
-              disabled={!hasAnswer}
-              onClick={() =>
-                setCurrentIndex((prev) =>
-                  Math.min(
-                    questions.length - 1,
-                    prev + 1
-                  )
-                )
-              }
-              className="px-5 py-3 bg-blue-600 text-white rounded-xl font-bold disabled:opacity-40"
-            >
-              التالي
-            </button>
-          ) : (
-            <button
-              disabled={
-                !hasAnswer || submitted
-              }
-              onClick={finish}
-              className="px-5 py-3 bg-green-600 text-white rounded-xl font-bold disabled:opacity-40"
-            >
-              إنهاء التقييم
-            </button>
-          )}
-        </div>
-      </section>
+        <button
+          onClick={nextQuestion}
+          disabled={
+            !isProvided(currentAnswer)
+          }
+          className="mt-6 w-full py-3 bg-blue-600 text-white rounded-xl disabled:opacity-40"
+        >
+          {currentIndex ===
+          questions.length - 1
+            ? "إنهاء التقييم"
+            : "السؤال التالي"}
+        </button>
+      </div>
     </main>
   );
 }
 
 function ExamCenter({
+  exams,
+  onSelectExam,
   onBack,
-  onStartExam,
 }) {
   return (
-    <main className="w-full max-w-4xl">
+    <main
+      className="max-w-5xl mx-auto px-4 py-8"
+      dir="rtl"
+    >
       <button
         onClick={onBack}
-        className="mb-4 px-4 py-2 bg-white border rounded-xl font-bold"
+        className="mb-6 px-4 py-2 bg-gray-100 rounded-lg"
       >
-        ← العودة للرئيسية
+        ← العودة
       </button>
 
-      <section className="bg-white border rounded-3xl p-6 md:p-8">
-        <h1 className="text-3xl font-black text-slate-800">
+      <div className="bg-white rounded-3xl shadow-sm p-7 mb-6">
+        <h1 className="text-3xl font-bold mb-3">
           مركز الاختبارات
         </h1>
 
-        <p className="text-slate-500 mt-2">
-          الاختبارات المتوفرة فعليًا في بيانات المشروع حاليًا.
+        <p className="text-gray-600">
+          اختر الاختبار الذي تريد حله.
         </p>
+      </div>
 
-        <div className="mt-6 border rounded-2xl p-5 bg-slate-50">
-          <span className="inline-block bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-xs font-black">
-            {tahsiliTest01.category}
-          </span>
-
-          <h2 className="text-xl font-black text-slate-800 mt-3">
-            {tahsiliTest01.title}
-          </h2>
-
-          <p className="text-sm text-slate-500 mt-2">
-            عدد الأسئلة:{" "}
-            {tahsiliTest01.questions.length}
-          </p>
-
+      <div className="grid md:grid-cols-2 gap-5">
+        {exams.map((exam) => (
           <button
-            onClick={() =>
-              onStartExam(tahsiliTest01)
-            }
-            className="mt-5 px-6 py-3 bg-indigo-600 text-white rounded-xl font-black"
+            key={exam.exam_id}
+            onClick={() => onSelectExam(exam)}
+            className="text-right bg-white rounded-2xl shadow-sm p-6 hover:shadow-md"
           >
-            ابدأ الاختبار
-          </button>
-        </div>
+            <h2 className="text-xl font-bold mb-2">
+              {exam.title}
+            </h2>
 
-        <div className="mt-5 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 leading-7">
-          ملاحظة: ملف{" "}
-          <code className="font-bold">
-            src/examsData.js
-          </code>{" "}
-          يحتوي حاليًا على اختبار تحصيلي واحد.
-          أما وصف 30 اختبارًا في{" "}
-          <code className="font-bold">
-            data.json
-          </code>{" "}
-          فهو وصف للمحتوى المطلوب وليس ملفات اختبارات
-          موجودة فعليًا.
+            <p className="text-gray-600 mb-4">
+              {exam.category}
+            </p>
+
+            <span className="inline-block bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
+              {exam.questions?.length || 0} أسئلة
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {exams.length === 0 && (
+        <div className="bg-white rounded-2xl p-6 text-center">
+          لا توجد اختبارات متاحة حاليًا.
         </div>
-      </section>
+      )}
     </main>
   );
 }
@@ -1648,224 +1204,190 @@ function ExamScreen({
   exam,
   onBack,
 }) {
+  const questions = exam?.questions || [];
+
   const [currentIndex, setCurrentIndex] =
     useState(0);
 
-  const [selectedIndex, setSelectedIndex] =
-    useState(null);
-
-  const [answered, setAnswered] =
-    useState(false);
-
-  const [score, setScore] = useState(0);
+  const [answers, setAnswers] = useState({});
 
   const [finished, setFinished] =
     useState(false);
 
-  const question =
-    exam.questions[currentIndex];
+  const [score, setScore] = useState(0);
 
-  function handleAnswer(index) {
-    if (answered) return;
+  if (!exam || questions.length === 0) {
+    return (
+      <main
+        className="max-w-4xl mx-auto px-4 py-8"
+        dir="rtl"
+      >
+        <button
+          onClick={onBack}
+          className="mb-6 px-4 py-2 bg-gray-100 rounded-lg"
+        >
+          ← العودة
+        </button>
 
-    setSelectedIndex(index);
-    setAnswered(true);
-
-    if (
-      index ===
-      question.correct_answer_index
-    ) {
-      setScore((prev) => prev + 1);
-    }
+        <div className="bg-white rounded-2xl p-7 text-center">
+          لا توجد أسئلة في هذا الاختبار.
+        </div>
+      </main>
+    );
   }
 
-  function nextQuestion() {
+  const question = questions[currentIndex];
+  const currentAnswer =
+    answers[question.id] ?? null;
+
+  function chooseAnswer(index) {
+    setAnswers((previous) => ({
+      ...previous,
+      [question.id]: index,
+    }));
+  }
+
+  function next() {
+    if (currentAnswer === null) {
+      return;
+    }
+
     if (
       currentIndex <
-      exam.questions.length - 1
+      questions.length - 1
     ) {
-      setCurrentIndex((prev) => prev + 1);
-      setSelectedIndex(null);
-      setAnswered(false);
-    } else {
-      setFinished(true);
+      setCurrentIndex((index) => index + 1);
+      return;
     }
+
+    let finalScore = 0;
+
+    questions.forEach((item) => {
+      if (
+        answers[item.id] ===
+        item.correct_answer_index
+      ) {
+        finalScore += 1;
+      }
+    });
+
+    setScore(finalScore);
+    setFinished(true);
   }
 
   if (finished) {
-    const percentage =
-      exam.questions.length === 0
-        ? 0
-        : Math.round(
-            (score /
-              exam.questions.length) *
-              100
-          );
+    const percentage = Math.round(
+      (score / questions.length) * 100
+    );
 
     return (
-      <main className="w-full max-w-3xl">
-        <section className="bg-white border rounded-3xl shadow-sm p-8 text-center">
-          <div className="text-6xl mb-4">
-            🏆
-          </div>
-
-          <h1 className="text-3xl font-black text-slate-800">
-            انتهى الاختبار
+      <main
+        className="max-w-3xl mx-auto px-4 py-8"
+        dir="rtl"
+      >
+        <div className="bg-white rounded-3xl shadow-sm p-8 text-center">
+          <h1 className="text-3xl font-bold mb-4">
+            نتيجة الاختبار
           </h1>
 
-          <p className="text-slate-500 mt-2">
-            {exam.title}
+          <div className="text-5xl font-bold text-blue-600 mb-4">
+            {percentage}%
+          </div>
+
+          <p className="mb-2">
+            الدرجة: {score} /{" "}
+            {questions.length}
           </p>
 
-          <div className="my-8 bg-slate-50 rounded-2xl p-6">
-            <div className="text-5xl font-black text-blue-600">
-              {score}/
-              {exam.questions.length}
-            </div>
-
-            <p className="font-bold text-slate-600 mt-2">
-              النسبة: {percentage}%
-            </p>
-          </div>
+          <p className="text-gray-600 mb-6">
+            يمكنك العودة إلى مركز الاختبارات
+            واختيار اختبار آخر.
+          </p>
 
           <button
             onClick={onBack}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-black"
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl"
           >
-            العودة إلى مركز الاختبارات
+            العودة للاختبارات
           </button>
-        </section>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="w-full max-w-3xl">
+    <main
+      className="max-w-4xl mx-auto px-4 py-8"
+      dir="rtl"
+    >
       <button
         onClick={onBack}
-        className="mb-4 px-4 py-2 bg-white border rounded-xl font-bold"
+        className="mb-6 px-4 py-2 bg-gray-100 rounded-lg"
       >
-        ← العودة للاختبارات
+        ← العودة
       </button>
 
-      <section className="bg-white border rounded-3xl shadow-sm p-6 md:p-8">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="font-black text-slate-800">
-            {exam.title}
-          </h1>
-
-          <span className="text-sm text-slate-500">
-            السؤال {currentIndex + 1} من{" "}
-            {exam.questions.length}
-          </span>
-        </div>
-
-        <ProgressBar
-          value={
-            ((currentIndex + 1) /
-              exam.questions.length) *
-            100
-          }
-        />
-
-        <div className="mt-7">
-          <span className="text-xs bg-slate-100 px-3 py-1 rounded-full">
-            {question.subject}
-          </span>
-
-          <h2 className="text-xl md:text-2xl font-black text-slate-800 leading-9 mt-4">
-            {question.question_text}
-          </h2>
-        </div>
-
-        <div className="grid gap-3 mt-6">
-          {question.options.map(
-            (option, index) => {
-              let classes =
-                "text-right p-4 rounded-xl border font-bold transition ";
-
-              if (!answered) {
-                classes +=
-                  "bg-slate-50 hover:bg-blue-50 hover:border-blue-300";
-              } else if (
-                index ===
-                question.correct_answer_index
-              ) {
-                classes +=
-                  "bg-green-100 border-green-500 text-green-900";
-              } else if (
-                index === selectedIndex
-              ) {
-                classes +=
-                  "bg-red-100 border-red-500 text-red-900";
-              } else {
-                classes +=
-                  "bg-slate-50 opacity-70";
-              }
-
-              return (
-                <button
-                  key={index}
-                  onClick={() =>
-                    handleAnswer(index)
-                  }
-                  disabled={answered}
-                  className={classes}
-                >
-                  <span className="ml-2">
-                    {String.fromCharCode(
-                      65 + index
-                    )}
-                    .
-                  </span>
-
-                  {option}
-                </button>
-              );
+      <div className="bg-white rounded-3xl shadow-sm p-7">
+        <div className="mb-6">
+          <ProgressBar
+            value={
+              ((currentIndex + 1) /
+                questions.length) *
+              100
             }
+          />
+
+          <p className="text-sm text-gray-500 mt-2">
+            السؤال {currentIndex + 1} من{" "}
+            {questions.length}
+          </p>
+        </div>
+
+        <div className="mb-2 text-sm text-blue-600 font-bold">
+          {question.subject}
+        </div>
+
+        <h1 className="text-2xl font-bold mb-6">
+          {question.question_text}
+        </h1>
+
+        <div className="grid gap-3">
+          {question.options.map(
+            (option, index) => (
+              <button
+                key={`${question.id}-${index}`}
+                onClick={() =>
+                  chooseAnswer(index)
+                }
+                className={`text-right p-4 rounded-xl border transition ${
+                  currentAnswer === index
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <span className="font-bold ml-2">
+                  {String.fromCharCode(
+                    1571 + index
+                  )}.
+                </span>
+
+                {option}
+              </button>
+            )
           )}
         </div>
 
-        {answered && (
-          <div
-            className={`mt-6 rounded-2xl p-5 ${
-              selectedIndex ===
-              question.correct_answer_index
-                ? "bg-green-50 border border-green-200"
-                : "bg-red-50 border border-red-200"
-            }`}
-          >
-            <h3 className="font-black">
-              {selectedIndex ===
-              question.correct_answer_index
-                ? "✓ إجابة صحيحة"
-                : "✗ إجابة غير صحيحة"}
-            </h3>
-
-            <p className="text-sm mt-2">
-              <strong>
-                الإجابة الصحيحة:
-              </strong>{" "}
-              {question.correct_answer}
-            </p>
-
-            <p className="text-sm text-slate-600 mt-2 leading-7">
-              <strong>الشرح:</strong>{" "}
-              {question.explanation}
-            </p>
-
-            <button
-              onClick={nextQuestion}
-              className="mt-5 px-6 py-3 bg-blue-600 text-white rounded-xl font-black"
-            >
-              {currentIndex ===
-              exam.questions.length - 1
-                ? "عرض النتيجة"
-                : "السؤال التالي"}
-            </button>
-          </div>
-        )}
-      </section>
+        <button
+          onClick={next}
+          disabled={currentAnswer === null}
+          className="mt-6 w-full py-3 bg-blue-600 text-white rounded-xl disabled:opacity-40"
+        >
+          {currentIndex ===
+          questions.length - 1
+            ? "إنهاء الاختبار"
+            : "السؤال التالي"}
+        </button>
+      </div>
     </main>
   );
 }
@@ -1877,249 +1399,204 @@ function AdminScreen({
   onBack,
 }) {
   return (
-    <main className="w-full max-w-4xl">
+    <main
+      className="max-w-5xl mx-auto px-4 py-8"
+      dir="rtl"
+    >
       <button
         onClick={onBack}
-        className="mb-4 px-4 py-2 bg-white border rounded-xl font-bold"
+        className="mb-6 px-4 py-2 bg-gray-100 rounded-lg"
       >
         ← العودة
       </button>
 
-      <section className="bg-white border-2 border-yellow-400 rounded-3xl p-6">
-        <h1 className="text-2xl font-black text-slate-800">
-          لوحة تحكم المشرف
+      <div className="bg-white rounded-3xl shadow-sm p-7">
+        <h1 className="text-3xl font-bold mb-6">
+          لوحة الإدارة
         </h1>
 
-        <p className="text-sm text-slate-500 mt-2">
-          هذه النسخة تعرض طلبات الاشتراك المخزنة محليًا في المتصفح.
-        </p>
-
-        <div className="space-y-4 mt-6">
-          {requests.length === 0 && (
-            <div className="bg-slate-50 border rounded-xl p-5 text-center text-slate-500">
-              لا توجد طلبات اشتراك.
-            </div>
-          )}
-
-          {requests.map((request) => (
-            <div
-              key={request.id}
-              className="border rounded-2xl p-5 bg-slate-50"
-            >
-              <div className="flex flex-col md:flex-row justify-between gap-4">
+        {requests.length === 0 ? (
+          <p className="text-gray-600">
+            لا توجد طلبات اشتراك حاليًا.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {requests.map((request) => (
+              <div
+                key={request.email}
+                className="border rounded-2xl p-5 flex flex-wrap items-center justify-between gap-3"
+              >
                 <div>
-                  <h2 className="font-black text-lg">
-                    {request.name}
-                  </h2>
-
-                  <p className="text-sm text-slate-500 mt-1">
+                  <p className="font-bold">
                     {request.email}
                   </p>
 
-                  <p className="text-sm mt-2">
-                    الإيصال:{" "}
-                    <span className="text-blue-600">
-                      {request.receipt}
-                    </span>
-                  </p>
-
-                  <p className="text-sm mt-2">
-                    الحالة:{" "}
-                    <strong>
-                      {request.status ===
-                      "approved"
-                        ? "مقبول"
-                        : request.status ===
-                          "rejected"
-                        ? "مرفوض"
-                        : "قيد المراجعة"}
-                    </strong>
+                  <p className="text-sm text-gray-500">
+                    الحالة: {request.status}
                   </p>
                 </div>
 
-                {request.status ===
-                  "pending" && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() =>
-                        onApprove(
-                          request.id
-                        )
-                      }
-                      className="px-4 py-2 bg-green-600 text-white rounded-xl font-bold"
-                    >
-                      ✓ قبول
-                    </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() =>
+                      onApprove(request.email)
+                    }
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg"
+                  >
+                    قبول
+                  </button>
 
-                    <button
-                      onClick={() =>
-                        onReject(
-                          request.id
-                        )
-                      }
-                      className="px-4 py-2 bg-red-600 text-white rounded-xl font-bold"
-                    >
-                      ✕ رفض
-                    </button>
-                  </div>
-                )}
+                  <button
+                    onClick={() =>
+                      onReject(request.email)
+                    }
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg"
+                  >
+                    رفض
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 leading-7">
-          تنبيه تقني: بما أن Supabase في وضعك الحالي لا يسمح بعمليات INSERT/UPDATE/DELETE، فإن الموافقة هنا محلية في متصفح المشرف وليست نظام اشتراكات مركزيًا للمستخدمين. سنعالج هذه النقطة لاحقًا بخدمة تخزين مناسبة عندما نجهز نظام الاشتراكات الفعلي.
-        </div>
-      </section>
+            ))}
+          </div>
+        )}
+      </div>
     </main>
   );
 }
 
-function getStageIcon(stageId) {
+function getStageIcon(icon) {
   const icons = {
-    arabic_foundation: "🔤",
-    math_foundation: "🔢",
-    english_learning: "🇬🇧",
-    qudrat_tahsili: "📝",
+    arabic_alphabet: "🔤",
+    math_icon: "🔢",
+    english_icon: "🇬🇧",
+    exam_icon: "📝",
   };
 
-  return icons[stageId] || "📚";
+  return icons[icon] || "📚";
 }
 
 export default function App() {
-  const [
-    currentUserEmail,
-    setCurrentUserEmail,
-  ] = useState(
-    localStorage.getItem("userEmail") ||
-      "user@example.com"
-  );
+  const [currentUserEmail, setCurrentUserEmail] =
+    useState(() => {
+      try {
+        return (
+          localStorage.getItem(
+            "lntalem_user_email"
+          ) || "user@example.com"
+        );
+      } catch {
+        return "user@example.com";
+      }
+    });
 
   const [view, setView] =
     useState("home");
 
-  const [
-    selectedStage,
-    setSelectedStage,
-  ] = useState(null);
+  const [selectedStage, setSelectedStage] =
+    useState(null);
 
-  const [
-    selectedLesson,
-    setSelectedLesson,
-  ] = useState(null);
+  const [selectedLesson, setSelectedLesson] =
+    useState(null);
 
-  const [
-    selectedExam,
-    setSelectedExam,
-  ] = useState(null);
+  const [selectedExam, setSelectedExam] =
+    useState(null);
 
-  const [
-    assessmentResult,
-    setAssessmentResult,
-  ] = useState(null);
+  const [assessmentResult, setAssessmentResult] =
+    useState(null);
 
-  const [requests, setRequests] =
+  const [subscriptionRequests, setSubscriptionRequests] =
     useState(() => {
       try {
-        const saved =
-          localStorage.getItem(
-            "lntalem_subscription_requests"
-          );
+        const saved = localStorage.getItem(
+          "lntalem_subscription_requests"
+        );
 
-        if (saved) {
-          return JSON.parse(saved);
-        }
+        return saved
+          ? JSON.parse(saved)
+          : [];
       } catch {
-        // تجاهل البيانات المحلية غير الصالحة
+        return [];
       }
-
-      return [
-        {
-          id: 1,
-          name: "عمر أحمد",
-          email: "omar@example.com",
-          receipt: "إيصال_دفع_1.jpg",
-          status: "pending",
-        },
-      ];
     });
 
   const isAdmin =
     currentUserEmail === ADMIN_EMAIL;
 
   const stages =
-    educationalData?.educationalStages ||
-    [];
+    educationalData?.educationalStages || [];
 
-  function saveRequests(
-    nextRequests
-  ) {
-    setRequests(nextRequests);
-
-    localStorage.setItem(
-      "lntalem_subscription_requests",
-      JSON.stringify(nextRequests)
+  const isSubscriptionRequested =
+    subscriptionRequests.some(
+      (request) =>
+        request.email === currentUserEmail
     );
+
+  function saveRequests(requests) {
+    setSubscriptionRequests(requests);
+
+    try {
+      localStorage.setItem(
+        "lntalem_subscription_requests",
+        JSON.stringify(requests)
+      );
+    } catch {
+      // تجاهل خطأ التخزين المحلي
+    }
   }
 
   function changeEmail() {
     const email = window.prompt(
-      "أدخل بريدك الإلكتروني:",
+      "أدخل البريد الإلكتروني:",
       currentUserEmail
     );
 
     if (!email) return;
 
-    const normalizedEmail = email
-      .trim()
-      .toLowerCase();
+    const normalizedEmail =
+      email.trim().toLowerCase();
 
-    localStorage.setItem(
-      "userEmail",
-      normalizedEmail
-    );
+    if (!normalizedEmail) return;
 
-    setCurrentUserEmail(
-      normalizedEmail
-    );
+    setCurrentUserEmail(normalizedEmail);
+
+    try {
+      localStorage.setItem(
+        "lntalem_user_email",
+        normalizedEmail
+      );
+    } catch {
+      // تجاهل خطأ التخزين المحلي
+    }
   }
 
   function requestSubscription() {
-    const name =
-      window.prompt(
-        "أدخل اسمك:",
-        "متعلم جديد"
-      ) || "متعلم جديد";
+    const exists =
+      subscriptionRequests.some(
+        (request) =>
+          request.email === currentUserEmail
+      );
 
-    const receipt =
-      window.prompt(
-        "اكتب اسم/مرجع إيصال الدفع:",
-        "receipt.jpg"
-      ) || "غير مرفق";
+    if (exists) {
+      return;
+    }
 
-    const newRequest = {
-      id: Date.now(),
-      name,
-      email: currentUserEmail,
-      receipt,
-      status: "pending",
-    };
+    const updated = [
+      ...subscriptionRequests,
+      {
+        email: currentUserEmail,
+        status: "pending",
+        createdAt:
+          new Date().toISOString(),
+      },
+    ];
 
-    saveRequests([
-      ...requests,
-      newRequest,
-    ]);
-
-    window.alert(
-      "تم تسجيل طلب الاشتراك محليًا. يحتاج الطلب إلى مراجعة المشرف."
-    );
+    saveRequests(updated);
   }
 
-  function approveRequest(id) {
+  function approveRequest(email) {
     saveRequests(
-      requests.map((request) =>
-        request.id === id
+      subscriptionRequests.map((request) =>
+        request.email === email
           ? {
               ...request,
               status: "approved",
@@ -2127,58 +1604,18 @@ export default function App() {
           : request
       )
     );
-
-    window.alert(
-      "تم قبول الطلب."
-    );
   }
 
-  function rejectRequest(id) {
+  function rejectRequest(email) {
     saveRequests(
-      requests.map((request) =>
-        request.id === id
+      subscriptionRequests.map((request) =>
+        request.email === email
           ? {
               ...request,
               status: "rejected",
             }
           : request
       )
-    );
-
-    window.alert(
-      "تم رفض الطلب."
-    );
-  }
-
-  function openStage(stage) {
-    setSelectedStage(stage);
-    setSelectedLesson(null);
-    setAssessmentResult(null);
-    setView("stage");
-  }
-
-  function openLesson(lesson) {
-    setSelectedLesson(lesson);
-    setAssessmentResult(null);
-    setView("lesson");
-  }
-
-  function openAssessment() {
-    setAssessmentResult(null);
-    setView("assessment");
-  }
-
-  function finishAssessment(
-    score,
-    total
-  ) {
-    setAssessmentResult({
-      score,
-      total,
-    });
-
-    setView(
-      "assessment-result"
     );
   }
 
@@ -2187,258 +1624,170 @@ export default function App() {
     setSelectedStage(null);
     setSelectedLesson(null);
     setSelectedExam(null);
-    setAssessmentResult(null);
   }
 
-  function goBackToStage() {
-    setView("stage");
+  function openStage(stage) {
+    setSelectedStage(stage);
     setSelectedLesson(null);
-    setAssessmentResult(null);
+    setView("stage");
   }
 
-  function startExam(exam) {
+  function openLesson(lesson) {
+    setSelectedLesson(lesson);
+    setView("lesson");
+  }
+
+  function openAssessment() {
+    if (!selectedLesson) return;
+    setAssessmentResult(null);
+    setView("assessment");
+  }
+
+  function openExamCenter() {
+    setSelectedExam(null);
+    setView("exam-center");
+  }
+
+  function openExam(exam) {
     setSelectedExam(exam);
     setView("exam");
   }
 
-  const page = (() => {
-    if (view === "home") {
-      return (
-        <HomeScreen
-          stages={stages}
-          onStage={openStage}
-          onExamCenter={() =>
-            setView("exam-center")
-          }
-        />
-      );
-    }
+  function openAdmin() {
+    if (!isAdmin) return;
+    setView("admin");
+  }
 
-    if (
-      view === "stage" &&
-      selectedStage
-    ) {
-      return (
-        <StageScreen
-          stage={selectedStage}
-          onBack={goHome}
-          onLesson={openLesson}
-        />
-      );
-    }
+  function handleAssessmentFinish(score) {
+    setAssessmentResult({
+      score,
+      total:
+        selectedLesson?.assessmentQuestions
+          ?.length || 0,
+    });
 
-    if (
-      view === "lesson" &&
-      selectedLesson
-    ) {
-      return (
-        <LessonScreen
-          lesson={selectedLesson}
-          onBack={goBackToStage}
-          onAssessment={
-            openAssessment
-          }
-        />
-      );
-    }
+    setView("lesson");
+  }
 
-    if (
-      view === "assessment" &&
-      selectedLesson
-    ) {
-      return (
-        <AssessmentScreen
-          lesson={selectedLesson}
-          onBack={goBackToStage}
-          onFinish={
-            finishAssessment
-          }
-        />
-      );
-    }
+  let content = null;
 
-    if (
-      view === "assessment-result" &&
-      selectedLesson &&
-      assessmentResult
-    ) {
-      const percentage =
-        assessmentResult.total === 0
-          ? 0
-          : Math.round(
-              (assessmentResult.score /
-                assessmentResult.total) *
-                100
-            );
-
-      return (
-        <main className="w-full max-w-3xl">
-          <section className="bg-white border rounded-3xl p-8 text-center">
-            <div className="text-6xl mb-4">
-              {percentage >= 80
-                ? "🎉"
-                : "📚"}
-            </div>
-
-            <h1 className="text-3xl font-black">
-              نتيجة التقييم
-            </h1>
-
-            <p className="text-slate-500 mt-2">
-              {selectedLesson.title}
-            </p>
-
-            <div className="my-8 bg-slate-50 rounded-2xl p-6">
-              <div className="text-5xl font-black text-blue-600">
-                {assessmentResult.score}/
-                {assessmentResult.total}
-              </div>
-
-              <p className="font-bold text-slate-600 mt-2">
-                النسبة: {percentage}%
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3 justify-center">
-              <button
-                onClick={() =>
-                  setView("assessment")
-                }
-                className="px-5 py-3 bg-blue-600 text-white rounded-xl font-bold"
-              >
-                إعادة التقييم
-              </button>
-
-              <button
-                onClick={() =>
-                  setView("lesson")
-                }
-                className="px-5 py-3 bg-slate-200 rounded-xl font-bold"
-              >
-                العودة للدرس
-              </button>
-            </div>
-          </section>
-        </main>
-      );
-    }
-
-    if (view === "exam-center") {
-      return (
-        <ExamCenter
-          onBack={goHome}
-          onStartExam={
-            startExam
-          }
-        />
-      );
-    }
-
-    if (
-      view === "exam" &&
-      selectedExam
-    ) {
-      return (
-        <ExamScreen
-          exam={selectedExam}
-          onBack={() =>
-            setView(
-              "exam-center"
-            )
-          }
-        />
-      );
-    }
-
-    if (
-      view === "admin" &&
-      isAdmin
-    ) {
-      return (
-        <AdminScreen
-          requests={requests}
-          onApprove={
-            approveRequest
-          }
-          onReject={
-            rejectRequest
-          }
-          onBack={goHome}
-        />
-      );
-    }
-
-    return (
-      <main className="w-full max-w-xl bg-white rounded-2xl p-8 text-center">
-        <h1 className="text-2xl font-black">
-          الصفحة غير موجودة
-        </h1>
-
-        <button
-          onClick={goHome}
-          className="mt-5 px-5 py-3 bg-blue-600 text-white rounded-xl font-bold"
-        >
-          العودة للرئيسية
-        </button>
-      </main>
+  if (view === "home") {
+    content = (
+      <HomeScreen
+        stages={stages}
+        onSelectStage={openStage}
+        onExamCenter={openExamCenter}
+      />
     );
-  })();
+  }
+
+  if (
+    view === "stage" &&
+    selectedStage
+  ) {
+    content = (
+      <StageScreen
+        stage={selectedStage}
+        onBack={goHome}
+        onSelectLesson={openLesson}
+        subscriptionRequested={
+          isSubscriptionRequested
+        }
+        onRequestSubscription={
+          requestSubscription
+        }
+      />
+    );
+  }
+
+  if (
+    view === "lesson" &&
+    selectedLesson
+  ) {
+    content = (
+      <LessonScreen
+        lesson={selectedLesson}
+        onBack={() =>
+          setView("stage")
+        }
+      />
+    );
+  }
+
+  if (
+    view === "assessment" &&
+    selectedLesson
+  ) {
+    content = (
+      <AssessmentScreen
+        lesson={selectedLesson}
+        onBack={() =>
+          setView("lesson")
+        }
+        onFinish={handleAssessmentFinish}
+      />
+    );
+  }
+
+  if (view === "exam-center") {
+    content = (
+      <ExamCenter
+        exams={tahsiliExams}
+        onSelectExam={openExam}
+        onBack={goHome}
+      />
+    );
+  }
+
+  if (
+    view === "exam" &&
+    selectedExam
+  ) {
+    content = (
+      <ExamScreen
+        exam={selectedExam}
+        onBack={openExamCenter}
+      />
+    );
+  }
+
+  if (view === "admin" && isAdmin) {
+    content = (
+      <AdminScreen
+        requests={subscriptionRequests}
+        onApprove={approveRequest}
+        onReject={rejectRequest}
+        onBack={goHome}
+      />
+    );
+  }
 
   return (
     <div
+      className="min-h-screen bg-gray-50 text-gray-900"
       dir="rtl"
-      className="min-h-screen bg-slate-100 p-4 md:p-6"
     >
       <Header
-        currentUserEmail={
-          currentUserEmail
-        }
+        title="منصة لنتعلم التعليمية"
+        currentUserEmail={currentUserEmail}
         isAdmin={isAdmin}
         onHome={goHome}
-        onAdmin={() =>
-          setView("admin")
-        }
+        onExamCenter={openExamCenter}
+        onAdmin={openAdmin}
+        onChangeEmail={changeEmail}
       />
 
-      {view === "home" && (
-        <div className="w-full max-w-5xl mx-auto mb-4 flex justify-end">
-          <button
-            onClick={changeEmail}
-            className="px-4 py-2 bg-white border rounded-xl text-sm font-bold"
-          >
-            تغيير البريد الإلكتروني
-          </button>
+      {assessmentResult && (
+        <div className="max-w-5xl mx-auto px-4 pt-5">
+          <div className="bg-green-50 text-green-800 rounded-xl p-4">
+            آخر نتيجة تقييم:{" "}
+            {assessmentResult.score} من{" "}
+            {assessmentResult.total}
+          </div>
         </div>
       )}
 
-      <div className="w-full max-w-5xl mx-auto">
-        {page}
-      </div>
-
-      {view === "stage" &&
-        selectedStage &&
-        !isAdmin && (
-          <div className="w-full max-w-5xl mx-auto mt-6">
-            <div className="bg-white border rounded-2xl p-5">
-              <h3 className="font-black text-slate-800">
-                🔐 حالة الاشتراك
-              </h3>
-
-              <p className="text-sm text-slate-500 mt-1">
-                المحتوى التعليمي في هذه النسخة يعمل كواجهة تعليمية. طلبات الاشتراك الحالية تجريبية ومحلية.
-              </p>
-
-              <button
-                onClick={
-                  requestSubscription
-                }
-                className="mt-4 px-5 py-3 bg-amber-500 text-white rounded-xl font-black"
-              >
-                إرسال طلب اشتراك
-              </button>
-            </div>
-          </div>
-        )}
+      {content}
     </div>
   );
 }
