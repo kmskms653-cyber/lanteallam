@@ -51,28 +51,14 @@ export const tahsiliTest01 = {
   ]
 };
 
-
-/*
- * سجل الاختبارات الموجود حاليًا داخل المشروع.
- *
- * يمكن إضافة:
- *
- * tahsili_test_02
- * tahsili_test_03
- * ...
- *
- * هنا مستقبلًا دون استخدام fs أو path.
- */
 export const tahsiliExams = [
   tahsiliTest01
 ];
 
-
-/*
- * الحصول على اختبار بواسطة المعرف.
- */
 export function getExamData(examId) {
-  return tahsiliExams.find(
-    (exam) => exam.exam_id === examId
-  ) || null;
+  return (
+    tahsiliExams.find(
+      (exam) => exam.exam_id === examId
+    ) || null
+  );
 }
