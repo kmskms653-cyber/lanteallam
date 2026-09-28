@@ -1,10 +1,7 @@
 import React, { useMemo, useState } from "react";
 import educationalData from "./data/data.json";
-import {
-  tahsiliExams,
-  getExamData,
-} from "./examsData";
-
+import { tahsiliExams } from "./examsData";
+ 
 const ADMIN_EMAIL = "kmskms653@gmail.com";
 
 const LESSON_TYPES = {
