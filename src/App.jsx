@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import educationalData from "./data/data.json";
 import {
-  tahsiliTest01,
   tahsiliExams,
   getExamData,
 } from "./examsData";
