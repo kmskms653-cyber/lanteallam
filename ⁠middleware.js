@@ -1,24 +1,29 @@
 // middleware.js - نظام الحماية الشامل والصارم للموقع
 
-export function middleware(req) {
-    const pathname = req.nextUrl ? req.nextUrl.pathname : req.url;
-    const user = req.user || {}; // جلب بيانات المستخدم
+import { NextResponse } from 'next/server';
 
-    // 1. استثناء الصفحات العامة والأساسية المسموحة للجميع
-    const publicPaths = ['/login', '/register', '/subscription', '/api/login', '/api/register', '/'];
-    if (publicPaths.includes(pathname) || pathname.startsWith('/_next') || pathname.startsWith('/static')) {
-        return { authorized: true };
+export function middleware(request) {
+  const url = request.nextUrl.clone();
+  
+  // حماية لوحة المشرف والتأكد من المسار
+  if (url.pathname.startsWith('/admin')) {
+    // التحقق من البريد الإلكتروني المحفوظ في الكوكي (Cookie)
+    const userEmail = request.cookies.get('userEmail')?.value || '';
+    
+    // إذا لم يكن البريد مطابقاً للمشرف الحصري، يتم طرده فوراً إلى الصفحة الرئيسية
+    if (userEmail !== 'kmskms653@gmail.com') {
+      url.pathname = '/';
+      return NextResponse.redirect(url);
     }
+  }
 
-    // 2. حماية لوحة إدارة المشرف وإعداداته (حجب تام عن الجميع باستثناء المشرف حصرياً)
-    const isAdminRoute = pathname.startsWith('/admin') || 
-                           pathname.startsWith('/api/admin') || 
-                           pathname.includes('/admin-settings');
+  return NextResponse.next();
+}
 
-    if (isAdminRoute) {
-        if (user.role !== 'admin') {
-            if (pathname.startsWith('/api/')) {
-                return { 
+export const config = {
+  matcher: ['/admin/:path*'],
+};
+
                     authorized: false, 
                     status: 403, 
                     error: "ACCESS_DENIED", 
