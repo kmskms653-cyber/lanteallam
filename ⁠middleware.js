@@ -52,3 +52,38 @@ function strictAuthAndSubscription(req, res, next) {
 }
 
 module.exports = { strictAuthAndSubscription };
+// middleware.js - حماية قاطعة وتوجيه غير المشتركين
+
+export function enforceSubscriptionAndAdmin(req) {
+    const { pathname } = req.nextUrl || req.url;
+
+    // 1. استثناء الصفحات العامة التي يجب أن يزورها المستخدم غير المشترك أو الزائر
+    const publicPaths = ['/login', '/register', '/subscription', '/api/login', '/api/register', '/'];
+    if (publicPaths.includes(pathname) || pathname.startsWith('/_next') || pathname.startsWith('/static')) {
+        return { authorized: true };
+    }
+
+    // 2. حماية لوحة إدارة المشرف (Admin) منع قاطع لغير المشرف
+    if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
+        const userRole = req.user?.role; // يتم جلبها من التوكن أو الجلسة
+        if (userRole !== 'admin') {
+            return {
+                authorized: false,
+                redirectUrl: '/dashboard?error=unauthorized_admin'
+            };
+        }
+    }
+
+    // 3. منع قاطع لغير المشتركين من الدخول لأي قسم أو أيقونة تعليمية وتوجيههم للاشتراك
+    const userSubscription = req.user?.subscriptionStatus; // active, trialing, expired, null
+    const validSubscriptions = ['active', 'trialing'];
+
+    if (!validSubscriptions.includes(userSubscription)) {
+        return {
+            authorized: false,
+            redirectUrl: '/subscription?message=subscription_required_to_access_content'
+        };
+    }
+
+    return { authorized: true };
+}
