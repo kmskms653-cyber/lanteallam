@@ -1,92 +1,53 @@
-// middleware/auth.js - منع قاطع وحماية شاملة
+// middleware.js - نظام الحماية الشامل والصارم للموقع
 
-function strictAuthAndSubscription(req, res, next) {
-    const path = req.path;
+export function middleware(req) {
+    const pathname = req.nextUrl ? req.nextUrl.pathname : req.url;
+    const user = req.user || {}; // جلب بيانات المستخدم
 
-    // 1. حماية لوحة التحكم (Admin): منع قاطع لأي شخص ما لم يكن المشرف (Admin)
-    if (path.startsWith('/admin') || path.startsWith('/api/admin')) {
-        if (!req.user || req.user.role !== 'admin') {
-            if (path.startsWith('/api/')) {
-                return res.status(403).json({
-                    error: "FORBIDDEN",
-                    message: "غير مسموح لك نهائياً بالوصول لوحة الإدارة"
-                });
-            }
-            // إعادة توجيه فورية لمنع رؤية الرابط أو الصفحة
-            return res.redirect('/login?error=admin_required');
-        }
+    // 1. استثناء الصفحات العامة والأساسية المسموحة للجميع
+    const publicPaths = ['/login', '/register', '/subscription', '/api/login', '/api/register', '/'];
+    if (publicPaths.includes(pathname) || pathname.startsWith('/_next') || pathname.startsWith('/static')) {
+        return { authorized: true };
     }
 
-    // 2. استثناء الصفحات العامة المسموحة للزوار (تسجيل الدخول، الاشتراكات، الصفحة الرئيسية التعريفية)
-    const publicPaths = ['/login', '/register', '/subscription', '/api/login', '/api/register'];
-    if (publicPaths.includes(path) || path === '/') {
-        return next();
-    }
-
-    // 3. منع قاطع للزوار (غير المسجلين أو غير المشتركين) من النقر على أي أيقونة أو محتوى تعليمي
-    if (!req.user) {
-        if (path.startsWith('/api/')) {
-            return res.status(401).json({
-                error: "LOGIN_REQUIRED",
-                message: "يجب تسجيل الدخول أولاً للاستفادة من المحتوى"
-            });
-        }
-        // تحويل الزائر مباشرة لصفحة تسجيل الدخول أو الاشتراك
-        return res.redirect('/login?redirect=' + encodeURIComponent(path));
-    }
-
-    // 4. التحقق من الاشتراك النشط للمحتويات والأيقونات المدفوعة (active أو trialing فقط)
-    const validStatuses = ['active', 'trialing'];
-    if (req.user.role !== 'admin' && !validStatuses.includes(req.user.subscriptionStatus)) {
-        if (path.startsWith('/api/')) {
-            return res.status(402).json({
-                error: "SUBSCRIPTION_REQUIRED",
-                message: "هذا المحتوى يتطلب اشتراكاً نشطاً. يرجى الترقية للاستفادة من الأيقونات والدروس."
-            });
-        }
-        // تحويل المستخدم غير المشترك مباشرة لصفحة الاشتراكات
-        return res.redirect('/subscription?message=upgrade_required');
-    }
-
-    next();
-}
-
-module.exports = { strictAuthAndSubscription };
-// middleware.js - حماية قاطعة وتأكيد حجب إعدادات المشرف عن الجميع عدا المشرف
-
-export function strictAdminProtection(req, res, next) {
-    // استخراج مسار الطلب ودور المستخدم (الذي يتم التحقق منه عبر التوكن أو الجلسة الآمنة)
-    const pathname = req.nextUrl ? req.nextUrl.pathname : req.path;
-    const user = req.user; // بيانات المستخدم الحالي
-
-    // التحقق مما إذا كان الطلب يستهدف لوحة الإدارة أو أيقونات إعدادات المشرف
+    // 2. حماية لوحة إدارة المشرف وإعداداته (حجب تام عن الجميع باستثناء المشرف حصرياً)
     const isAdminRoute = pathname.startsWith('/admin') || 
                            pathname.startsWith('/api/admin') || 
                            pathname.includes('/admin-settings');
 
     if (isAdminRoute) {
-        // حجب تام: إذا لم يكن المستخدم موجوداً، أو لم يكن دوره 'admin' حصرياً
-        if (!user || user.role !== 'admin') {
-            
-            // إذا كان الطلب عبر الـ API، يتم إرجاع خطأ أمني صارم
+        if (user.role !== 'admin') {
             if (pathname.startsWith('/api/')) {
-                return res.status(403).json({
-                    error: "ACCESS_DENIED",
-                    message: "وصول مرفوض: هذه المنطقة مخصصة للمشرف فقط ولا يمكن لأي دور آخر رؤيتها أو الوصول إليها."
-                });
+                return { 
+                    authorized: false, 
+                    status: 403, 
+                    error: "ACCESS_DENIED", 
+                    message: "وصول مرفوض: هذه المنطقة مخصصة للمشرف فقط." 
+                };
             }
-
-            // إذا كان الطلب عبر المتصفح، يتم إعادة التوجيه القسري بعيداً عن الرابط فوراً
-            // يمكن توجيهه إلى الصفحة الرئيسية أو صفحة تسجيل الدخول مع رسالة خطأ
-            if (res.redirect) {
-                return res.redirect('/login?error=admin_unauthorized');
-            }
-            return { authorized: false, redirect: '/login' };
+            // إعادة توجيه غير المشرف فوراً خارج لوحة التحكم
+            return { authorized: false, redirectUrl: '/dashboard?error=admin_unauthorized' };
         }
     }
 
-    // إذا كان المشرف الحقيقي، يُسمح له بالمرور
+    // 3. حماية قاطعة للمحتوى والأيقونات: منع غير المشتركين وتوجيههم لصفحة الاشتراك
+    const userSubscription = user.subscriptionStatus; // active, trialing, expired, null
+    const validSubscriptions = ['active', 'trialing'];
+
+    // المشرف مستثنى دائماً، أما غير المشترك فيتم منعه وتوجيهه للاشتراك
+    if (user.role !== 'admin' && !validSubscriptions.includes(userSubscription)) {
+        if (pathname.startsWith('/api/')) {
+            return { 
+                authorized: false, 
+                status: 402, 
+                error: "SUBSCRIPTION_REQUIRED", 
+                message: "هذا المحتوى يتطلب اشتراكاً نشطاً. يرجى الاشتراك للاستفادة من خدمات التطبيق." 
+            };
+        }
+        // توجيه قسري لصفحة الاشتراك
+        return { authorized: false, redirectUrl: '/subscription?message=upgrade_required' };
+    }
+
     return { authorized: true };
 }
 
-}
