@@ -1,25 +1,60 @@
-import { NextResponse } from 'next/server';
 
-export function middleware(request) {
-  const url = request.nextUrl.clone();
-  
-  // حماية لوحة المشرف والتأكد من المسار
-  if (url.pathname.startsWith('/admin')) {
-    // التحقق من البريد الإلكتروني المحفوظ في الكوكي (Cookie)
-    const userEmail = request.cookies.get('userEmail')?.value || '';
-    
-    // إذا لم يكن البريد مطابقاً للمشرف الحصري، يتم طرده فوراً إلى الصفحة الرئيسية
-    if (userEmail !== 'kmskms653@gmail.com') {
-      url.pathname = '/';
-      return NextResponse.redirect(url);
+import { NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+
+const ADMIN_EMAIL = 'kmskms653@gmail.com';
+
+export async function middleware(request) {
+  let response = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+
+          response = NextResponse.next({ request });
+
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
     }
+  );
+
+  // التحقق من المستخدم عن طريق Supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // حماية لوحة المشرف
+  if (!user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  // السماح لبريد المشرف فقط
+  if (user.email?.toLowerCase() !== ADMIN_EMAIL) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    return NextResponse.redirect(url);
+  }
+
+  return response;
 }
 
 export const config = {
   matcher: ['/admin/:path*'],
 };
+
 
 
