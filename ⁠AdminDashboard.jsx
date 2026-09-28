@@ -269,4 +269,79 @@ function submitSub() {
     alert("تم استلام طلبك بنجاح، سيتم مراجعته وتفعيله قريباً.");
     go("home");
 }
+// AdminDashboard.jsx - لوحة إعدادات المشرف والتحكم الكامل
+import React, { useState } from 'react';
+
+export default function AdminDashboard() {
+    const [activeTab, setActiveTab] = useState('subscriptions');
+
+    return (
+        <div className="admin-container" style={{ direction: 'rtl', padding: '20px' }}>
+            <h2>لوحة إدارة المشرف</h2>
+            <hr />
+            
+            {/* شريط التنقل الخاص بإعدادات المشرف */}
+            <div className="admin-nav-buttons" style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                <button 
+                    className={`btn ${activeTab === 'subscriptions' ? 'btn-primary' : 'btn-outline-primary'}`}
+                    onClick={() => setActiveTab('subscriptions')}
+                >
+                    طلبات الاشتراك (قبول / رفض)
+                </button>
+                <button 
+                    className={`btn ${activeTab === 'locking' ? 'btn-primary' : 'btn-outline-primary'}`}
+                    onClick={() => setActiveTab('locking')}
+                >
+                    قفل الأيقونات عن غير المشتركين
+                </button>
+                <button 
+                    className={`btn ${activeTab === 'files' ? 'btn-primary' : 'btn-outline-primary'}`}
+                    onClick={() => setActiveTab('files')}
+                >
+                    إضافة أو حذف ملفات للأقسام
+                </button>
+            </div>
+
+            {/* محتوى التبويبات */}
+            <div className="admin-content-card p-4 border rounded">
+                {activeTab === 'subscriptions' && (
+                    <div id="subscriptions-section">
+                        <h3>إدارة طلبات الاشتراكات المعلقة</h3>
+                        <p>استعراض الطلبات الجديدة واتخاذ قرار القبول أو الرفض:</p>
+                        {/* جدول أو قائمة الطلبات */}
+                        <div className="d-flex justify-content-between align-items-center p-2 border-bottom">
+                            <span>المستخدم: أحمد محمد (طلب اشتراك باقة سنوية)</span>
+                            <div>
+                                <button className="btn btn-success btn-sm mx-1" onClick={() => alert('تم قبول الطلب وتفعيل الاشتراك')}>قبول</button>
+                                <button className="btn btn-danger btn-sm mx-1" onClick={() => alert('تم رفض الطلب')}>رفض</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'locking' && (
+                    <div id="locking-section">
+                        <h3>قفل وفتح الأيقونات والدروس</h3>
+                        <p>التحكم في حالة القفل الخاصة بالأقسام لغير المشتركين:</p>
+                        <label className="d-block my-2">
+                            <input type="checkbox" defaultChecked /> قفل قسم القدرات والتحصيلي عن غير المشتركين
+                        </label>
+                        <label className="d-block my-2">
+                            <input type="checkbox" defaultChecked /> قفل الأنشطة التفاعلية والبارزة
+                        </label>
+                    </div>
+                )}
+
+                {activeTab === 'files' && (
+                    <div id="files-section">
+                        <h3>إدارة ملفات الأقسام (إضافة / حذف)</h3>
+                        <p>رفع ملفات تعليمية جديدة أو حذف الملفات الحالية من الأقسام:</p>
+                        <input type="file" className="form-control mb-3" />
+                        <button className="btn btn-dark">رفع الملف إلى القسم المحدد</button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
 
