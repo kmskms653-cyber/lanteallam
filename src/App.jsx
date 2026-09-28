@@ -13,17 +13,50 @@ const LESSON_TYPES = {
   calculation: "حساب",
 };
 
+function normalizeAnswer(value) {
+  if (value === undefined || value === null) return "";
+
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).join("|");
+  }
+
+  return String(value).trim().toLowerCase();
+}
+
+function answersAreEqual(answer, correctAnswer) {
+  if (Array.isArray(correctAnswer)) {
+    if (!Array.isArray(answer)) return false;
+
+    return (
+      answer.length === correctAnswer.length &&
+      answer.every(
+        (item, index) =>
+          normalizeAnswer(item) ===
+          normalizeAnswer(correctAnswer[index])
+      )
+    );
+  }
+
+  return (
+    normalizeAnswer(answer) ===
+    normalizeAnswer(correctAnswer)
+  );
+}
+
 function createLessonFromSection(stage, section) {
   const shortLessons = [];
   const activities = [];
   const assessmentQuestions = [];
 
   /*
-   * الحروف العربية
+   * الحروف العربية / الكلمات / الكتابة / الأرقام
    */
   if (Array.isArray(section.items) && section.items.length > 0) {
     const firstItem = section.items[0];
 
+    /*
+     * الحروف العربية
+     */
     if (firstItem.char) {
       shortLessons.push({
         id: `${section.subId}-letters`,
@@ -37,9 +70,10 @@ function createLessonFromSection(stage, section) {
 
       section.items.forEach((item, index) => {
         activities.push({
-          id: `${section.subId}-activity-${index + 1}`,
+          id: `${section.subId}-letters-activity-${index + 1}`,
           type: "reading",
           question: `اقرأ الحرف التالي: ${item.char}`,
+          options: item.name ? [item.name] : [],
           correctAnswer: item.name,
           explanation: `الحرف ${item.char} يسمى ${item.name}.`,
         });
@@ -62,10 +96,14 @@ function createLessonFromSection(stage, section) {
 
       section.items.forEach((item, index) => {
         activities.push({
-          id: `${section.subId}-activity-${index + 1}`,
-          type: "reading",
+          id: `${section.subId}-words-activity-${index + 1}`,
+          type: "choice",
           question: `ما معنى كلمة «${item.word}»؟`,
-          options: [item.meaning, "كلمة أخرى", "لا نعرف معناها"],
+          options: [
+            item.meaning,
+            "كلمة أخرى",
+            "لا نعرف معناها",
+          ],
           correctAnswer: item.meaning,
           explanation: `معنى «${item.word}» هو: ${item.meaning}.`,
         });
@@ -73,29 +111,38 @@ function createLessonFromSection(stage, section) {
     }
 
     /*
-     * الكتابة
+     * الكتابة وتكوين الكلمة
      */
-    if (firstItem.steps) {
+    if (Array.isArray(firstItem.steps)) {
       shortLessons.push({
         id: `${section.subId}-writing`,
         title: "تكوين الكلمة خطوة بخطوة",
         explanation:
           "نتعلم تكوين الكلمة من حروفها بالترتيب الصحيح.",
         examples: section.items.map(
-          (item) => `${item.word}: ${item.steps.join(" ← ")}`
+          (item) =>
+            `${item.word}: ${item.steps.join(" ← ")}`
         ),
       });
 
       section.items.forEach((item, index) => {
         activities.push({
-          id: `${section.subId}-activity-${index + 1}`,
+          id: `${section.subId}-ordering-activity-${index + 1}`,
           type: "ordering",
           question: `رتب حروف كلمة «${item.word}» بالترتيب الصحيح.`,
-          options: item.steps,
-          correctAnswer: item.steps,
+          options: [...item.steps],
+          correctAnswer: [...item.steps],
           explanation: `تتكون كلمة «${item.word}» من: ${item.steps.join(
             "، "
           )}.`,
+        });
+
+        activities.push({
+          id: `${section.subId}-writing-activity-${index + 1}`,
+          type: "writing",
+          question: `اكتب كلمة «${item.word}» كاملة.`,
+          correctAnswer: item.word,
+          explanation: `الكلمة الصحيحة هي: ${item.word}.`,
         });
       });
     }
@@ -117,7 +164,7 @@ function createLessonFromSection(stage, section) {
 
       section.items.forEach((item, index) => {
         activities.push({
-          id: `${section.subId}-activity-${index + 1}`,
+          id: `${section.subId}-numbers-activity-${index + 1}`,
           type: "choice",
           question: `ما اسم الرقم ${item.number}؟`,
           options: [
@@ -140,7 +187,8 @@ function createLessonFromSection(stage, section) {
     shortLessons.push({
       id: `${section.subId}-examples`,
       title: section.title,
-      explanation: section.description || "شرح مبسط للموضوع.",
+      explanation:
+        section.description || "شرح مبسط للموضوع.",
       examples: section.examples.map(
         (example) =>
           `${example.operation}: ${example.explanation}`
@@ -148,16 +196,25 @@ function createLessonFromSection(stage, section) {
     });
 
     section.examples.forEach((example, index) => {
-      const answerMatch = example.operation.match(/=\s*([^=]+)$/);
-      const answer = answerMatch ? answerMatch[1].trim() : "";
+      const answerMatch = String(example.operation || "").match(
+        /=\s*([^=]+)$/
+      );
+
+      const answer = answerMatch
+        ? answerMatch[1].trim()
+        : "";
 
       if (answer) {
         activities.push({
-          id: `${section.subId}-activity-${index + 1}`,
+          id: `${section.subId}-calculation-activity-${index + 1}`,
           type: "calculation",
-          question: `احسب: ${example.operation.split("=")[0].trim()} = ؟`,
+          question: `احسب: ${String(
+            example.operation
+          ).split("=")[0].trim()} = ؟`,
           correctAnswer: answer,
-          explanation: example.explanation,
+          explanation:
+            example.explanation ||
+            `الإجابة الصحيحة هي ${answer}.`,
         });
       }
     });
@@ -180,10 +237,10 @@ function createLessonFromSection(stage, section) {
     if (Array.isArray(section.part1.items)) {
       section.part1.items.forEach((item, index) => {
         activities.push({
-          id: `${section.subId}-part1-${index + 1}`,
+          id: `${section.subId}-english-activity-${index + 1}`,
           type: "reading",
           question: `ما الكلمة المرتبطة بالحرف ${item.char}؟`,
-          options: [item.word],
+          options: item.word ? [item.word] : [],
           correctAnswer: item.word,
           explanation: `الحرف ${item.char} مرتبط بالكلمة ${item.word}.`,
         });
@@ -196,7 +253,8 @@ function createLessonFromSection(stage, section) {
         title: "القواعد الأساسية",
         explanation: section.part1.description || "",
         examples: section.part1.topics.map(
-          (topic) => `${topic.rule}: ${topic.example}`
+          (topic) =>
+            `${topic.rule}: ${topic.example}`
         ),
       });
     }
@@ -209,63 +267,116 @@ function createLessonFromSection(stage, section) {
       explanation: section.part2.description || "",
       examples:
         section.part2.vocab?.flatMap((group) =>
-          group.words.map((word) => `${group.category}: ${word}`)
-        ) || (section.part2.content ? [section.part2.content] : []),
+          (group.words || []).map(
+            (word) => `${group.category}: ${word}`
+          )
+        ) ||
+        (section.part2.content
+          ? [section.part2.content]
+          : []),
     });
   }
 
   /*
-   * الاختبار المدمج داخل data.json
+   * الاختبارات الموجودة داخل data.json
    */
   if (Array.isArray(section.quizList)) {
     section.quizList.forEach((quiz, index) => {
-      const correctOption =
-        quiz.options?.[quiz.correctIndex] || "";
+      const type =
+        quiz.type === "true-false" ||
+        quiz.type === "short-answer"
+          ? quiz.type
+          : "multiple-choice";
+
+      let correctAnswer = "";
+
+      if (type === "multiple-choice") {
+        correctAnswer =
+          quiz.options?.[quiz.correctIndex] ||
+          quiz.correctAnswer ||
+          "";
+      } else {
+        correctAnswer =
+          quiz.correctAnswer ??
+          quiz.answer ??
+          quiz.options?.[quiz.correctIndex] ??
+          "";
+      }
 
       assessmentQuestions.push({
         id: `${section.subId}-assessment-${index + 1}`,
-        question: quiz.question,
-        type: "multiple-choice",
-        options: quiz.options || [],
-        correctAnswer: correctOption,
+        question: quiz.question || quiz.question_text || "",
+        type,
+        options:
+          type === "multiple-choice"
+            ? quiz.options || []
+            : type === "true-false"
+            ? ["صح", "خطأ"]
+            : [],
+        correctAnswer,
         explanation: quiz.explanation || "",
       });
     });
   }
 
   /*
-   * أهداف الدرس تُولد من طبيعة المحتوى الموجود فعليًا.
+   * أهداف الدرس
    */
   const objectives = [];
 
   if (section.items?.some((item) => item.char)) {
-    objectives.push("التعرف على الحروف ونطقها بشكل صحيح.");
+    objectives.push(
+      "التعرف على الحروف ونطقها بشكل صحيح."
+    );
   }
 
   if (section.items?.some((item) => item.word)) {
-    objectives.push("قراءة الكلمات وفهم معانيها.");
+    objectives.push(
+      "قراءة الكلمات وفهم معانيها."
+    );
   }
 
   if (section.items?.some((item) => item.steps)) {
-    objectives.push("تكوين الكلمات وترتيب حروفها.");
+    objectives.push(
+      "تكوين الكلمات وترتيب حروفها."
+    );
+    objectives.push(
+      "كتابة الكلمات بصورة صحيحة."
+    );
   }
 
-  if (section.items?.some((item) => typeof item.number === "number")) {
-    objectives.push("التعرف على الأرقام وأسمائها وتمثيلها.");
+  if (
+    section.items?.some(
+      (item) => typeof item.number === "number"
+    )
+  ) {
+    objectives.push(
+      "التعرف على الأرقام وأسمائها وتمثيلها."
+    );
   }
 
   if (section.examples) {
-    objectives.push("فهم الفكرة من خلال أمثلة تطبيقية.");
+    objectives.push(
+      "فهم الفكرة من خلال أمثلة تطبيقية."
+    );
   }
 
   if (section.part1 || section.part2) {
-    objectives.push("اكتساب أساسيات الموضوع والتطبيق عليها.");
+    objectives.push(
+      "اكتساب أساسيات الموضوع والتطبيق عليها."
+    );
   }
 
   if (objectives.length === 0) {
-    objectives.push("فهم المفاهيم الأساسية في هذا القسم.");
-    objectives.push("التدرب على المهارات المرتبطة بالدرس.");
-    objectives.push("الاستعداد للتقييم في نهاية الدرس.");
+    objectives.push(
+      "فهم المفاهيم الأساسية في هذا القسم."
+    );
+    objectives.push(
+      "التدرب على المهارات المرتبطة بالدرس."
+    );
+    objectives.push(
+      "الاستعداد للتقييم في نهاية الدرس."
+    );
   }
 
   return {
@@ -304,13 +415,23 @@ function ProgressBar({ value }) {
     <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
       <div
         className="h-2 bg-blue-600 rounded-full transition-all"
-        style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
+        style={{
+          width: `${Math.max(
+            0,
+            Math.min(100, value)
+          )}%`,
+        }}
       />
     </div>
   );
 }
 
-function Header({ currentUserEmail, isAdmin, onHome, onAdmin }) {
+function Header({
+  currentUserEmail,
+  isAdmin,
+  onHome,
+  onAdmin,
+}) {
   return (
     <header className="w-full max-w-5xl mb-6 bg-white rounded-2xl shadow-sm border p-4">
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -356,7 +477,9 @@ function HomeScreen({
     <main className="w-full max-w-5xl">
       <section className="bg-white rounded-3xl shadow-sm border p-6 md:p-10 mb-6">
         <div className="text-center">
-          <div className="text-5xl mb-4">🎓</div>
+          <div className="text-5xl mb-4">
+            🎓
+          </div>
 
           <h1 className="text-3xl md:text-4xl font-black text-slate-800 mb-4">
             منصة لنتعلم التعليمية
@@ -371,7 +494,9 @@ function HomeScreen({
             onClick={() => {
               document
                 .getElementById("educational-stages")
-                ?.scrollIntoView({ behavior: "smooth" });
+                ?.scrollIntoView({
+                  behavior: "smooth",
+                });
             }}
             className="mt-6 px-7 py-3 bg-blue-600 text-white rounded-xl font-black"
           >
@@ -381,9 +506,23 @@ function HomeScreen({
       </section>
 
       <section className="grid md:grid-cols-3 gap-4 mb-8">
-        <InfoCard icon="📖" title="دروس قصيرة" text="تعلم المفاهيم بطريقة مبسطة." />
-        <InfoCard icon="✏️" title="أنشطة تفاعلية" text="طبّق ما تعلمته مباشرة." />
-        <InfoCard icon="📊" title="تقييم ونتيجة" text="اختبر فهمك وتعرف على أخطائك." />
+        <InfoCard
+          icon="📖"
+          title="دروس قصيرة"
+          text="تعلم المفاهيم بطريقة مبسطة."
+        />
+
+        <InfoCard
+          icon="✏️"
+          title="أنشطة تفاعلية"
+          text="طبّق ما تعلمته مباشرة."
+        />
+
+        <InfoCard
+          icon="📊"
+          title="تقييم ونتيجة"
+          text="اختبر فهمك وتعرف على أخطائك."
+        />
       </section>
 
       <section id="educational-stages">
@@ -422,8 +561,9 @@ function HomeScreen({
             <h2 className="text-xl font-black text-indigo-900">
               القدرات والتحصيلي
             </h2>
+
             <p className="text-indigo-700 mt-1">
-              انتقل إلى الاختبار الموجود حاليًا في بيانات المشروع.
+              انتقل إلى الاختبارات المتوفرة حاليًا في بيانات المشروع.
             </p>
           </div>
 
@@ -442,25 +582,47 @@ function HomeScreen({
 function InfoCard({ icon, title, text }) {
   return (
     <div className="bg-white border rounded-2xl p-5">
-      <div className="text-3xl mb-3">{icon}</div>
-      <h3 className="font-black text-slate-800">{title}</h3>
-      <p className="text-sm text-slate-500 mt-1">{text}</p>
+      <div className="text-3xl mb-3">
+        {icon}
+      </div>
+
+      <h3 className="font-black text-slate-800">
+        {title}
+      </h3>
+
+      <p className="text-sm text-slate-500 mt-1">
+        {text}
+      </p>
     </div>
   );
 }
 
-function StageScreen({ stage, onBack, onLesson }) {
+function StageScreen({
+  stage,
+  onBack,
+  onLesson,
+}) {
   const lessons = useMemo(
     () =>
       (stage.subSections || [])
-        .filter((section) => section.subId !== "tests")
-        .map((section) => createLessonFromSection(stage, section)),
+        .filter(
+          (section) =>
+            section.subId !== "tests"
+        )
+        .map((section) =>
+          createLessonFromSection(
+            stage,
+            section
+          )
+        ),
     [stage]
   );
 
-  const testSections = (stage.subSections || []).filter(
-    (section) => section.subId === "tests"
-  );
+  const testSections =
+    (stage.subSections || []).filter(
+      (section) =>
+        section.subId === "tests"
+    );
 
   return (
     <main className="w-full max-w-5xl">
@@ -520,22 +682,26 @@ function StageScreen({ stage, onBack, onLesson }) {
           {testSections.map((section) => (
             <div key={section.subId}>
               <p className="text-sm text-green-800">
-                {section.description || "اختبار المرحلة متاح للتدريب."}
+                {section.description ||
+                  "اختبار المرحلة متاح للتدريب."}
               </p>
 
-              {section.quizList?.map((quiz, index) => (
-                <div
-                  key={index}
-                  className="mt-4 bg-white rounded-xl border p-4"
-                >
-                  <p className="font-bold text-slate-800">
-                    {quiz.question}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-2">
-                    سؤال تقييم موجود ضمن بيانات المرحلة.
-                  </p>
-                </div>
-              ))}
+              {section.quizList?.map(
+                (quiz, index) => (
+                  <div
+                    key={index}
+                    className="mt-4 bg-white rounded-xl border p-4"
+                  >
+                    <p className="font-bold text-slate-800">
+                      {quiz.question}
+                    </p>
+
+                    <p className="text-xs text-slate-500 mt-2">
+                      سؤال تقييم موجود ضمن بيانات المرحلة.
+                    </p>
+                  </div>
+                )
+              )}
             </div>
           ))}
         </section>
@@ -549,25 +715,69 @@ function LessonScreen({
   onBack,
   onAssessment,
 }) {
-  const [activityAnswers, setActivityAnswers] = useState({});
-  const [writingValues, setWritingValues] = useState({});
+  const [
+    activityAnswers,
+    setActivityAnswers,
+  ] = useState({});
 
-  const completedActivities = lesson.activities.filter((activity) => {
-    return activityAnswers[activity.id] !== undefined;
-  }).length;
+  const [
+    writingValues,
+    setWritingValues,
+  ] = useState({});
+
+  const [
+    orderingValues,
+    setOrderingValues,
+  ] = useState({});
+
+  const completedActivities =
+    lesson.activities.filter(
+      (activity) =>
+        activityAnswers[activity.id] !==
+        undefined
+    ).length;
 
   const progress =
     lesson.activities.length === 0
       ? 0
       : Math.round(
-          (completedActivities / lesson.activities.length) * 100
+          (completedActivities /
+            lesson.activities.length) *
+            100
         );
 
-  function checkActivity(activity, answer) {
+  function checkActivity(
+    activity,
+    answer
+  ) {
     setActivityAnswers((prev) => ({
       ...prev,
       [activity.id]: answer,
     }));
+  }
+
+  function updateOrdering(
+    activityId,
+    value
+  ) {
+    setOrderingValues((prev) => ({
+      ...prev,
+      [activityId]: value,
+    }));
+  }
+
+  function resetActivity(activity) {
+    setActivityAnswers((prev) => {
+      const next = { ...prev };
+      delete next[activity.id];
+      return next;
+    });
+
+    setOrderingValues((prev) => {
+      const next = { ...prev };
+      delete next[activity.id];
+      return next;
+    });
   }
 
   return (
@@ -589,7 +799,10 @@ function LessonScreen({
         </h1>
 
         <div className="mt-5 bg-slate-50 rounded-2xl p-5">
-          <h2 className="font-black text-lg mb-2">مقدمة الدرس</h2>
+          <h2 className="font-black text-lg mb-2">
+            مقدمة الدرس
+          </h2>
+
           <p className="text-slate-600 leading-8">
             {lesson.introduction}
           </p>
@@ -601,14 +814,16 @@ function LessonScreen({
           </h2>
 
           <ul className="space-y-2">
-            {lesson.objectives.map((objective, index) => (
-              <li
-                key={index}
-                className="bg-blue-50 text-blue-900 rounded-xl p-3"
-              >
-                ✓ {objective}
-              </li>
-            ))}
+            {lesson.objectives.map(
+              (objective, index) => (
+                <li
+                  key={index}
+                  className="bg-blue-50 text-blue-900 rounded-xl p-3"
+                >
+                  ✓ {objective}
+                </li>
+              )
+            )}
           </ul>
         </div>
 
@@ -618,37 +833,44 @@ function LessonScreen({
           </h2>
 
           <div className="space-y-4">
-            {lesson.shortLessons.map((shortLesson) => (
-              <article
-                key={shortLesson.id}
-                className="border rounded-2xl p-5"
-              >
-                <h3 className="text-xl font-black text-slate-800">
-                  {shortLesson.title}
-                </h3>
+            {lesson.shortLessons.map(
+              (shortLesson) => (
+                <article
+                  key={shortLesson.id}
+                  className="border rounded-2xl p-5"
+                >
+                  <h3 className="text-xl font-black text-slate-800">
+                    {shortLesson.title}
+                  </h3>
 
-                <p className="text-slate-600 leading-8 mt-2">
-                  {shortLesson.explanation}
-                </p>
+                  <p className="text-slate-600 leading-8 mt-2">
+                    {shortLesson.explanation}
+                  </p>
 
-                {shortLesson.examples.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="font-black mb-2">أمثلة</h4>
+                  {shortLesson.examples
+                    .length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="font-black mb-2">
+                        أمثلة
+                      </h4>
 
-                    <div className="grid gap-2">
-                      {shortLesson.examples.map((example, index) => (
-                        <div
-                          key={index}
-                          className="bg-slate-50 border rounded-xl p-3"
-                        >
-                          {example}
-                        </div>
-                      ))}
+                      <div className="grid gap-2">
+                        {shortLesson.examples.map(
+                          (example, index) => (
+                            <div
+                              key={index}
+                              className="bg-slate-50 border rounded-xl p-3"
+                            >
+                              {example}
+                            </div>
+                          )
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </article>
-            ))}
+                  )}
+                </article>
+              )
+            )}
           </div>
         </div>
 
@@ -660,36 +882,70 @@ function LessonScreen({
               </h2>
 
               <span className="text-sm font-bold text-slate-500">
-                {progress}%
+                {completedActivities}/
+                {lesson.activities.length}
               </span>
             </div>
 
             <ProgressBar value={progress} />
 
             <div className="space-y-5 mt-5">
-              {lesson.activities.map((activity, index) => (
-                <ActivityCard
-                  key={activity.id}
-                  activity={activity}
-                  index={index}
-                  answer={activityAnswers[activity.id]}
-                  writingValue={writingValues[activity.id] || ""}
-                  onAnswer={(answer) =>
-                    checkActivity(activity, answer)
-                  }
-                  onWriting={(value) =>
-                    setWritingValues((prev) => ({
-                      ...prev,
-                      [activity.id]: value,
-                    }))
-                  }
-                />
-              ))}
+              {lesson.activities.map(
+                (activity, index) => (
+                  <ActivityCard
+                    key={activity.id}
+                    activity={activity}
+                    index={index}
+                    answer={
+                      activityAnswers[
+                        activity.id
+                      ]
+                    }
+                    writingValue={
+                      writingValues[
+                        activity.id
+                      ] || ""
+                    }
+                    orderingValue={
+                      orderingValues[
+                        activity.id
+                      ] || []
+                    }
+                    onAnswer={(answer) =>
+                      checkActivity(
+                        activity,
+                        answer
+                      )
+                    }
+                    onWriting={(value) =>
+                      setWritingValues(
+                        (prev) => ({
+                          ...prev,
+                          [activity.id]:
+                            value,
+                        })
+                      )
+                    }
+                    onOrderingChange={(
+                      value
+                    ) =>
+                      updateOrdering(
+                        activity.id,
+                        value
+                      )
+                    }
+                    onReset={() =>
+                      resetActivity(activity)
+                    }
+                  />
+                )
+              )}
             </div>
           </div>
         )}
 
-        {lesson.assessmentQuestions.length > 0 && (
+        {lesson.assessmentQuestions.length >
+          0 && (
           <section className="mt-8 bg-indigo-50 border border-indigo-100 rounded-2xl p-6">
             <h2 className="text-2xl font-black text-indigo-900">
               📝 تقييم الدرس
@@ -714,9 +970,13 @@ function LessonScreen({
           </h2>
 
           <ul className="space-y-2 text-amber-800">
-            {lesson.reviewRecommendations.map((recommendation, index) => (
-              <li key={index}>• {recommendation}</li>
-            ))}
+            {lesson.reviewRecommendations.map(
+              (recommendation, index) => (
+                <li key={index}>
+                  • {recommendation}
+                </li>
+              )
+            )}
           </ul>
         </section>
       </section>
@@ -729,17 +989,59 @@ function ActivityCard({
   index,
   answer,
   writingValue,
+  orderingValue,
   onAnswer,
   onWriting,
+  onOrderingChange,
+  onReset,
 }) {
   const isAnswered = answer !== undefined;
 
   const correct = isAnswered
-    ? Array.isArray(activity.correctAnswer)
-      ? JSON.stringify(answer) === JSON.stringify(activity.correctAnswer)
-      : String(answer).trim() ===
-        String(activity.correctAnswer).trim()
+    ? answersAreEqual(
+        answer,
+        activity.correctAnswer
+      )
     : false;
+
+  function handleOrderingOption(option) {
+    if (isAnswered) return;
+
+    if (orderingValue.includes(option)) {
+      return;
+    }
+
+    const next = [
+      ...orderingValue,
+      option,
+    ];
+
+    onOrderingChange(next);
+  }
+
+  function removeOrderingOption(
+    optionIndex
+  ) {
+    if (isAnswered) return;
+
+    const next = orderingValue.filter(
+      (_, index) =>
+        index !== optionIndex
+    );
+
+    onOrderingChange(next);
+  }
+
+  function submitOrdering() {
+    if (
+      orderingValue.length !==
+      activity.options.length
+    ) {
+      return;
+    }
+
+    onAnswer(orderingValue);
+  }
 
   return (
     <div className="border rounded-2xl p-5 bg-white">
@@ -749,7 +1051,8 @@ function ActivityCard({
         </h3>
 
         <span className="text-xs bg-slate-100 px-2 py-1 rounded-full">
-          {LESSON_TYPES[activity.type] || activity.type}
+          {LESSON_TYPES[activity.type] ||
+            activity.type}
         </span>
       </div>
 
@@ -757,54 +1060,238 @@ function ActivityCard({
         {activity.question}
       </p>
 
+      {/*
+       * الكتابة
+       */}
       {activity.type === "writing" && (
         <div className="mt-4">
           <input
             value={writingValue}
-            onChange={(e) => onWriting(e.target.value)}
+            disabled={isAnswered}
+            onChange={(e) =>
+              onWriting(e.target.value)
+            }
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (
+                e.key === "Enter" &&
+                writingValue.trim()
+              ) {
                 onAnswer(writingValue);
               }
             }}
             placeholder="اكتب إجابتك هنا"
-            className="w-full border rounded-xl p-3 text-right"
+            className="w-full border rounded-xl p-3 text-right disabled:bg-slate-100"
           />
 
           <button
-            onClick={() => onAnswer(writingValue)}
-            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold"
+            disabled={
+              !writingValue.trim() ||
+              isAnswered
+            }
+            onClick={() =>
+              onAnswer(writingValue)
+            }
+            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold disabled:opacity-40"
           >
             تحقق
           </button>
         </div>
       )}
 
-      {activity.options && activity.options.length > 0 && (
-        <div className="grid gap-2 mt-4">
-          {activity.options.map((option, optionIndex) => (
-            <button
-              key={optionIndex}
-              disabled={isAnswered}
-              onClick={() => {
-                if (activity.type === "ordering") {
-                  onAnswer([option]);
-                } else {
-                  onAnswer(option);
-                }
-              }}
-              className={`text-right p-3 rounded-xl border transition ${
-                isAnswered &&
-                String(answer) === String(option)
-                  ? "bg-blue-100 border-blue-400"
-                  : "bg-slate-50 hover:bg-slate-100"
-              }`}
-            >
-              {option}
-            </button>
-          ))}
+      {/*
+       * الحساب
+       */}
+      {activity.type === "calculation" && (
+        <div className="mt-4">
+          <input
+            value={writingValue}
+            disabled={isAnswered}
+            inputMode="decimal"
+            onChange={(e) =>
+              onWriting(e.target.value)
+            }
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" &&
+                writingValue.trim()
+              ) {
+                onAnswer(writingValue);
+              }
+            }}
+            placeholder="اكتب الناتج"
+            className="w-full border rounded-xl p-3 text-right disabled:bg-slate-100"
+          />
+
+          <button
+            disabled={
+              !writingValue.trim() ||
+              isAnswered
+            }
+            onClick={() =>
+              onAnswer(writingValue)
+            }
+            className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold disabled:opacity-40"
+          >
+            تحقق من الناتج
+          </button>
         </div>
       )}
+
+      {/*
+       * الترتيب
+       */}
+      {activity.type === "ordering" &&
+        activity.options?.length > 0 && (
+          <div className="mt-4">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+              <p className="font-black text-blue-900 mb-3">
+                ترتيبك الحالي:
+              </p>
+
+              {orderingValue.length === 0 ? (
+                <p className="text-sm text-blue-700">
+                  اختر الحروف بالترتيب.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {orderingValue.map(
+                    (option, optionIndex) => (
+                      <button
+                        key={`${option}-${optionIndex}`}
+                        onClick={() =>
+                          removeOrderingOption(
+                            optionIndex
+                          )
+                        }
+                        className="px-4 py-2 bg-white border border-blue-200 rounded-xl font-black"
+                        title="اضغط لإزالة العنصر"
+                      >
+                        {optionIndex + 1}.{" "}
+                        {option}
+                      </button>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
+              {activity.options.map(
+                (option, optionIndex) => {
+                  const selected =
+                    orderingValue.includes(
+                      option
+                    );
+
+                  return (
+                    <button
+                      key={`${option}-${optionIndex}`}
+                      disabled={
+                        isAnswered || selected
+                      }
+                      onClick={() =>
+                        handleOrderingOption(
+                          option
+                        )
+                      }
+                      className={`p-3 rounded-xl border font-black transition ${
+                        selected
+                          ? "bg-slate-200 text-slate-400"
+                          : "bg-slate-50 hover:bg-blue-50 hover:border-blue-300"
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  );
+                }
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-2 mt-3">
+              <button
+                disabled={
+                  isAnswered ||
+                  orderingValue.length !==
+                    activity.options.length
+                }
+                onClick={submitOrdering}
+                className="px-5 py-2 bg-blue-600 text-white rounded-xl font-bold disabled:opacity-40"
+              >
+                تحقق من الترتيب
+              </button>
+
+              {!isAnswered &&
+                orderingValue.length >
+                  0 && (
+                  <button
+                    onClick={() =>
+                      onOrderingChange([])
+                    }
+                    className="px-5 py-2 bg-slate-200 rounded-xl font-bold"
+                  >
+                    إعادة الترتيب
+                  </button>
+                )}
+            </div>
+          </div>
+        )}
+
+      {/*
+       * الاختيار والقراءة والمطابقة
+       */
+      {(activity.type === "choice" ||
+        activity.type === "reading" ||
+        activity.type === "matching") &&
+        activity.options &&
+        activity.options.length > 0 && (
+          <div className="grid gap-2 mt-4">
+            {activity.options.map(
+              (option, optionIndex) => {
+                const selected =
+                  normalizeAnswer(answer) ===
+                  normalizeAnswer(option);
+
+                return (
+                  <button
+                    key={optionIndex}
+                    disabled={isAnswered}
+                    onClick={() =>
+                      onAnswer(option)
+                    }
+                    className={`text-right p-3 rounded-xl border transition ${
+                      selected
+                        ? "bg-blue-100 border-blue-400"
+                        : "bg-slate-50 hover:bg-slate-100"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                );
+              }
+            )}
+          </div>
+        )}
+
+      {/*
+       * في حالة القراءة التي لا تحتوي خيارات
+       */
+      {activity.type === "reading" &&
+        (!activity.options ||
+          activity.options.length === 0) && (
+          <div className="mt-4">
+            <button
+              disabled={isAnswered}
+              onClick={() =>
+                onAnswer(
+                  activity.correctAnswer
+                )
+              }
+              className="px-5 py-3 bg-blue-600 text-white rounded-xl font-bold disabled:opacity-40"
+            >
+              إظهار الإجابة
+            </button>
+          </div>
+        )}
 
       {isAnswered && (
         <div
@@ -815,27 +1302,62 @@ function ActivityCard({
           }`}
         >
           <p className="font-black">
-            {correct ? "✓ إجابة صحيحة" : "✗ تحتاج إلى مراجعة"}
+            {correct
+              ? "✓ إجابة صحيحة"
+              : "✗ تحتاج إلى مراجعة"}
           </p>
+
+          {!correct && (
+            <p className="mt-2 text-sm">
+              <strong>
+                الإجابة الصحيحة:
+              </strong>{" "}
+              {Array.isArray(
+                activity.correctAnswer
+              )
+                ? activity.correctAnswer.join(
+                    " ← "
+                  )
+                : activity.correctAnswer}
+            </p>
+          )}
 
           {activity.explanation && (
             <p className="mt-1 text-sm">
               {activity.explanation}
             </p>
           )}
+
+          <button
+            onClick={onReset}
+            className="mt-3 px-4 py-2 bg-white border rounded-xl text-sm font-bold"
+          >
+            إعادة النشاط
+          </button>
         </div>
       )}
     </div>
   );
 }
 
-function AssessmentScreen({ lesson, onBack, onFinish }) {
-  const questions = lesson.assessmentQuestions;
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [submitted, setSubmitted] = useState(false);
+function AssessmentScreen({
+  lesson,
+  onBack,
+  onFinish,
+}) {
+  const questions =
+    lesson.assessmentQuestions;
 
-  const currentQuestion = questions[currentIndex];
+  const [currentIndex, setCurrentIndex] =
+    useState(0);
+
+  const [answers, setAnswers] = useState({});
+
+  const [submitted, setSubmitted] =
+    useState(false);
+
+  const currentQuestion =
+    questions[currentIndex];
 
   function selectAnswer(answer) {
     if (submitted) return;
@@ -847,14 +1369,23 @@ function AssessmentScreen({ lesson, onBack, onFinish }) {
   }
 
   function finish() {
+    if (
+      answers[currentQuestion.id] ===
+      undefined
+    ) {
+      return;
+    }
+
     setSubmitted(true);
 
     let score = 0;
 
     questions.forEach((question) => {
       if (
-        String(answers[question.id]).trim() ===
-        String(question.correctAnswer).trim()
+        answersAreEqual(
+          answers[question.id],
+          question.correctAnswer
+        )
       ) {
         score++;
       }
@@ -862,6 +1393,10 @@ function AssessmentScreen({ lesson, onBack, onFinish }) {
 
     onFinish(score, questions.length);
   }
+
+  const hasAnswer =
+    answers[currentQuestion.id] !==
+    undefined;
 
   return (
     <main className="w-full max-w-3xl">
@@ -879,45 +1414,120 @@ function AssessmentScreen({ lesson, onBack, onFinish }) {
           </span>
 
           <span className="text-sm text-slate-500">
-            السؤال {currentIndex + 1} من {questions.length}
+            السؤال {currentIndex + 1} من{" "}
+            {questions.length}
           </span>
         </div>
 
         <ProgressBar
-          value={((currentIndex + 1) / questions.length) * 100}
+          value={
+            ((currentIndex + 1) /
+              questions.length) *
+            100
+          }
         />
 
         <h1 className="text-xl md:text-2xl font-black text-slate-800 mt-6 leading-9">
           {currentQuestion.question}
         </h1>
 
-        <div className="grid gap-3 mt-6">
-          {(currentQuestion.options || []).map((option, index) => {
-            const selected =
-              answers[currentQuestion.id] === option;
+        {currentQuestion.type ===
+          "multiple-choice" && (
+          <div className="grid gap-3 mt-6">
+            {(
+              currentQuestion.options ||
+              []
+            ).map((option, index) => {
+              const selected =
+                answers[
+                  currentQuestion.id
+                ] === option;
 
-            return (
-              <button
-                key={index}
-                disabled={submitted}
-                onClick={() => selectAnswer(option)}
-                className={`text-right p-4 rounded-xl border font-bold ${
-                  selected
-                    ? "bg-blue-100 border-blue-500"
-                    : "bg-slate-50 hover:bg-slate-100"
-                }`}
-              >
-                {option}
-              </button>
-            );
-          })}
-        </div>
+              return (
+                <button
+                  key={index}
+                  disabled={submitted}
+                  onClick={() =>
+                    selectAnswer(option)
+                  }
+                  className={`text-right p-4 rounded-xl border font-bold ${
+                    selected
+                      ? "bg-blue-100 border-blue-500"
+                      : "bg-slate-50 hover:bg-slate-100"
+                  }`}
+                >
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {currentQuestion.type ===
+          "true-false" && (
+          <div className="grid grid-cols-2 gap-3 mt-6">
+            {["صح", "خطأ"].map(
+              (option) => {
+                const selected =
+                  answers[
+                    currentQuestion.id
+                  ] === option;
+
+                return (
+                  <button
+                    key={option}
+                    disabled={submitted}
+                    onClick={() =>
+                      selectAnswer(option)
+                    }
+                    className={`p-4 rounded-xl border font-black ${
+                      selected
+                        ? "bg-blue-100 border-blue-500"
+                        : "bg-slate-50 hover:bg-slate-100"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                );
+              }
+            )}
+          </div>
+        )}
+
+        {currentQuestion.type ===
+          "short-answer" && (
+          <div className="mt-6">
+            <input
+              disabled={submitted}
+              value={
+                answers[
+                  currentQuestion.id
+                ] || ""
+              }
+              onChange={(e) =>
+                selectAnswer(
+                  e.target.value
+                )
+              }
+              placeholder="اكتب إجابتك"
+              className="w-full border rounded-xl p-4 text-right"
+            />
+          </div>
+        )}
 
         {submitted && (
           <div className="mt-5 bg-slate-50 border rounded-xl p-4">
             <p className="font-black">
-              الإجابة الصحيحة: {currentQuestion.correctAnswer}
+              الإجابة الصحيحة:{" "}
+              {Array.isArray(
+                currentQuestion.correctAnswer
+              )
+                ? currentQuestion.correctAnswer.join(
+                    "، "
+                  )
+                : currentQuestion.correctAnswer}
             </p>
+
             <p className="text-sm text-slate-600 mt-1">
               {currentQuestion.explanation}
             </p>
@@ -928,19 +1538,25 @@ function AssessmentScreen({ lesson, onBack, onFinish }) {
           <button
             disabled={currentIndex === 0}
             onClick={() =>
-              setCurrentIndex((prev) => Math.max(0, prev - 1))
+              setCurrentIndex((prev) =>
+                Math.max(0, prev - 1)
+              )
             }
             className="px-5 py-3 bg-slate-200 rounded-xl font-bold disabled:opacity-40"
           >
             السابق
           </button>
 
-          {currentIndex < questions.length - 1 ? (
+          {currentIndex <
+          questions.length - 1 ? (
             <button
-              disabled={!answers[currentQuestion.id]}
+              disabled={!hasAnswer}
               onClick={() =>
                 setCurrentIndex((prev) =>
-                  Math.min(questions.length - 1, prev + 1)
+                  Math.min(
+                    questions.length - 1,
+                    prev + 1
+                  )
                 )
               }
               className="px-5 py-3 bg-blue-600 text-white rounded-xl font-bold disabled:opacity-40"
@@ -949,7 +1565,9 @@ function AssessmentScreen({ lesson, onBack, onFinish }) {
             </button>
           ) : (
             <button
-              disabled={!answers[currentQuestion.id] || submitted}
+              disabled={
+                !hasAnswer || submitted
+              }
               onClick={finish}
               className="px-5 py-3 bg-green-600 text-white rounded-xl font-bold disabled:opacity-40"
             >
@@ -962,7 +1580,10 @@ function AssessmentScreen({ lesson, onBack, onFinish }) {
   );
 }
 
-function ExamCenter({ onBack, onStartExam }) {
+function ExamCenter({
+  onBack,
+  onStartExam,
+}) {
   return (
     <main className="w-full max-w-4xl">
       <button
@@ -991,35 +1612,58 @@ function ExamCenter({ onBack, onStartExam }) {
           </h2>
 
           <p className="text-sm text-slate-500 mt-2">
-            عدد الأسئلة: {tahsiliTest01.questions.length}
+            عدد الأسئلة:{" "}
+            {tahsiliTest01.questions.length}
           </p>
 
           <button
-            onClick={() => onStartExam(tahsiliTest01)}
+            onClick={() =>
+              onStartExam(tahsiliTest01)
+            }
             className="mt-5 px-6 py-3 bg-indigo-600 text-white rounded-xl font-black"
           >
             ابدأ الاختبار
           </button>
         </div>
 
-        <div className="mt-5 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
-          ملاحظة: ملف `examsData.js` الذي تم فحصه يحتوي حاليًا على
-          اختبار تحصيلي واحد فقط. وصف 30 اختبارًا في `data.json`
-          لا يعني أن ملفات الاختبارات الثلاثين موجودة فعليًا.
+        <div className="mt-5 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 leading-7">
+          ملاحظة: ملف{" "}
+          <code className="font-bold">
+            src/examsData.js
+          </code>{" "}
+          يحتوي حاليًا على اختبار تحصيلي واحد.
+          أما وصف 30 اختبارًا في{" "}
+          <code className="font-bold">
+            data.json
+          </code>{" "}
+          فهو وصف للمحتوى المطلوب وليس ملفات اختبارات
+          موجودة فعليًا.
         </div>
       </section>
     </main>
   );
 }
 
-function ExamScreen({ exam, onBack }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedIndex, setSelectedIndex] = useState(null);
-  const [answered, setAnswered] = useState(false);
-  const [score, setScore] = useState(0);
-  const [finished, setFinished] = useState(false);
+function ExamScreen({
+  exam,
+  onBack,
+}) {
+  const [currentIndex, setCurrentIndex] =
+    useState(0);
 
-  const question = exam.questions[currentIndex];
+  const [selectedIndex, setSelectedIndex] =
+    useState(null);
+
+  const [answered, setAnswered] =
+    useState(false);
+
+  const [score, setScore] = useState(0);
+
+  const [finished, setFinished] =
+    useState(false);
+
+  const question =
+    exam.questions[currentIndex];
 
   function handleAnswer(index) {
     if (answered) return;
@@ -1027,13 +1671,19 @@ function ExamScreen({ exam, onBack }) {
     setSelectedIndex(index);
     setAnswered(true);
 
-    if (index === question.correct_answer_index) {
+    if (
+      index ===
+      question.correct_answer_index
+    ) {
       setScore((prev) => prev + 1);
     }
   }
 
   function nextQuestion() {
-    if (currentIndex < exam.questions.length - 1) {
+    if (
+      currentIndex <
+      exam.questions.length - 1
+    ) {
       setCurrentIndex((prev) => prev + 1);
       setSelectedIndex(null);
       setAnswered(false);
@@ -1043,14 +1693,21 @@ function ExamScreen({ exam, onBack }) {
   }
 
   if (finished) {
-    const percentage = Math.round(
-      (score / exam.questions.length) * 100
-    );
+    const percentage =
+      exam.questions.length === 0
+        ? 0
+        : Math.round(
+            (score /
+              exam.questions.length) *
+              100
+          );
 
     return (
       <main className="w-full max-w-3xl">
         <section className="bg-white border rounded-3xl shadow-sm p-8 text-center">
-          <div className="text-6xl mb-4">🏆</div>
+          <div className="text-6xl mb-4">
+            🏆
+          </div>
 
           <h1 className="text-3xl font-black text-slate-800">
             انتهى الاختبار
@@ -1062,7 +1719,8 @@ function ExamScreen({ exam, onBack }) {
 
           <div className="my-8 bg-slate-50 rounded-2xl p-6">
             <div className="text-5xl font-black text-blue-600">
-              {score}/{exam.questions.length}
+              {score}/
+              {exam.questions.length}
             </div>
 
             <p className="font-bold text-slate-600 mt-2">
@@ -1097,12 +1755,17 @@ function ExamScreen({ exam, onBack }) {
           </h1>
 
           <span className="text-sm text-slate-500">
-            السؤال {currentIndex + 1} من {exam.questions.length}
+            السؤال {currentIndex + 1} من{" "}
+            {exam.questions.length}
           </span>
         </div>
 
         <ProgressBar
-          value={((currentIndex + 1) / exam.questions.length) * 100}
+          value={
+            ((currentIndex + 1) /
+              exam.questions.length) *
+            100
+          }
         />
 
         <div className="mt-7">
@@ -1116,53 +1779,73 @@ function ExamScreen({ exam, onBack }) {
         </div>
 
         <div className="grid gap-3 mt-6">
-          {question.options.map((option, index) => {
-            let classes =
-              "text-right p-4 rounded-xl border font-bold transition ";
+          {question.options.map(
+            (option, index) => {
+              let classes =
+                "text-right p-4 rounded-xl border font-bold transition ";
 
-            if (!answered) {
-              classes +=
-                "bg-slate-50 hover:bg-blue-50 hover:border-blue-300";
-            } else if (index === question.correct_answer_index) {
-              classes += "bg-green-100 border-green-500 text-green-900";
-            } else if (index === selectedIndex) {
-              classes += "bg-red-100 border-red-500 text-red-900";
-            } else {
-              classes += "bg-slate-50 opacity-70";
+              if (!answered) {
+                classes +=
+                  "bg-slate-50 hover:bg-blue-50 hover:border-blue-300";
+              } else if (
+                index ===
+                question.correct_answer_index
+              ) {
+                classes +=
+                  "bg-green-100 border-green-500 text-green-900";
+              } else if (
+                index === selectedIndex
+              ) {
+                classes +=
+                  "bg-red-100 border-red-500 text-red-900";
+              } else {
+                classes +=
+                  "bg-slate-50 opacity-70";
+              }
+
+              return (
+                <button
+                  key={index}
+                  onClick={() =>
+                    handleAnswer(index)
+                  }
+                  disabled={answered}
+                  className={classes}
+                >
+                  <span className="ml-2">
+                    {String.fromCharCode(
+                      65 + index
+                    )}
+                    .
+                  </span>
+
+                  {option}
+                </button>
+              );
             }
-
-            return (
-              <button
-                key={index}
-                onClick={() => handleAnswer(index)}
-                disabled={answered}
-                className={classes}
-              >
-                <span className="ml-2">
-                  {String.fromCharCode(65 + index)}.
-                </span>
-                {option}
-              </button>
-            );
-          })}
+          )}
         </div>
 
         {answered && (
           <div
             className={`mt-6 rounded-2xl p-5 ${
-              selectedIndex === question.correct_answer_index
+              selectedIndex ===
+              question.correct_answer_index
                 ? "bg-green-50 border border-green-200"
                 : "bg-red-50 border border-red-200"
             }`}
           >
             <h3 className="font-black">
-              {selectedIndex === question.correct_answer_index
+              {selectedIndex ===
+              question.correct_answer_index
                 ? "✓ إجابة صحيحة"
                 : "✗ إجابة غير صحيحة"}
             </h3>
 
             <p className="text-sm mt-2">
-              <strong>الإجابة الصحيحة:</strong>{" "}
+              <strong>
+                الإجابة الصحيحة:
+              </strong>{" "}
               {question.correct_answer}
             </p>
 
@@ -1175,7 +1858,8 @@ function ExamScreen({ exam, onBack }) {
               onClick={nextQuestion}
               className="mt-5 px-6 py-3 bg-blue-600 text-white rounded-xl font-black"
             >
-              {currentIndex === exam.questions.length - 1
+              {currentIndex ===
+              exam.questions.length - 1
                 ? "عرض النتيجة"
                 : "السؤال التالي"}
             </button>
@@ -1242,26 +1926,37 @@ function AdminScreen({
                   <p className="text-sm mt-2">
                     الحالة:{" "}
                     <strong>
-                      {request.status === "approved"
+                      {request.status ===
+                      "approved"
                         ? "مقبول"
-                        : request.status === "rejected"
+                        : request.status ===
+                          "rejected"
                         ? "مرفوض"
                         : "قيد المراجعة"}
                     </strong>
                   </p>
                 </div>
 
-                {request.status === "pending" && (
+                {request.status ===
+                  "pending" && (
                   <div className="flex gap-2">
                     <button
-                      onClick={() => onApprove(request.id)}
+                      onClick={() =>
+                        onApprove(
+                          request.id
+                        )
+                      }
                       className="px-4 py-2 bg-green-600 text-white rounded-xl font-bold"
                     >
                       ✓ قبول
                     </button>
 
                     <button
-                      onClick={() => onReject(request.id)}
+                      onClick={() =>
+                        onReject(
+                          request.id
+                        )
+                      }
                       className="px-4 py-2 bg-red-600 text-white rounded-xl font-bold"
                     >
                       ✕ رفض
@@ -1274,11 +1969,7 @@ function AdminScreen({
         </div>
 
         <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 leading-7">
-          تنبيه تقني: بما أن Supabase في وضعك الحالي لا يسمح
-          بعمليات INSERT/UPDATE/DELETE، فإن الموافقة هنا محلية
-          في متصفح المشرف وليست نظام اشتراكات مركزيًا للمستخدمين.
-          سنعالج هذه النقطة لاحقًا بخدمة تخزين مناسبة عندما نجهز
-          نظام الاشتراكات الفعلي.
+          تنبيه تقني: بما أن Supabase في وضعك الحالي لا يسمح بعمليات INSERT/UPDATE/DELETE، فإن الموافقة هنا محلية في متصفح المشرف وليست نظام اشتراكات مركزيًا للمستخدمين. سنعالج هذه النقطة لاحقًا بخدمة تخزين مناسبة عندما نجهز نظام الاشتراكات الفعلي.
         </div>
       </section>
     </main>
@@ -1297,44 +1988,75 @@ function getStageIcon(stageId) {
 }
 
 export default function App() {
-  const [currentUserEmail, setCurrentUserEmail] = useState(
-    localStorage.getItem("userEmail") || "user@example.com"
+  const [
+    currentUserEmail,
+    setCurrentUserEmail,
+  ] = useState(
+    localStorage.getItem("userEmail") ||
+      "user@example.com"
   );
 
-  const [view, setView] = useState("home");
-  const [selectedStage, setSelectedStage] = useState(null);
-  const [selectedLesson, setSelectedLesson] = useState(null);
-  const [selectedExam, setSelectedExam] = useState(null);
-  const [assessmentResult, setAssessmentResult] = useState(null);
+  const [view, setView] =
+    useState("home");
 
-  const [requests, setRequests] = useState(() => {
-    try {
-      const saved = localStorage.getItem("lntalem_subscription_requests");
+  const [
+    selectedStage,
+    setSelectedStage,
+  ] = useState(null);
 
-      if (saved) {
-        return JSON.parse(saved);
+  const [
+    selectedLesson,
+    setSelectedLesson,
+  ] = useState(null);
+
+  const [
+    selectedExam,
+    setSelectedExam,
+  ] = useState(null);
+
+  const [
+    assessmentResult,
+    setAssessmentResult,
+  ] = useState(null);
+
+  const [requests, setRequests] =
+    useState(() => {
+      try {
+        const saved =
+          localStorage.getItem(
+            "lntalem_subscription_requests"
+          );
+
+        if (saved) {
+          return JSON.parse(saved);
+        }
+      } catch {
+        // تجاهل البيانات المحلية غير الصالحة
       }
-    } catch {
-      // تجاهل البيانات المحلية غير الصالحة
-    }
 
-    return [
-      {
-        id: 1,
-        name: "عمر أحمد",
-        email: "omar@example.com",
-        receipt: "إيصال_دفع_1.jpg",
-        status: "pending",
-      },
-    ];
-  });
+      return [
+        {
+          id: 1,
+          name: "عمر أحمد",
+          email: "omar@example.com",
+          receipt: "إيصال_دفع_1.jpg",
+          status: "pending",
+        },
+      ];
+    });
 
-  const isAdmin = currentUserEmail === ADMIN_EMAIL;
+  const isAdmin =
+    currentUserEmail === ADMIN_EMAIL;
 
-  const stages = educationalData?.educationalStages || [];
+  const stages =
+    educationalData?.educationalStages ||
+    [];
 
-  function saveRequests(nextRequests) {
+  function saveRequests(
+    nextRequests
+  ) {
     setRequests(nextRequests);
+
     localStorage.setItem(
       "lntalem_subscription_requests",
       JSON.stringify(nextRequests)
@@ -1349,15 +2071,26 @@ export default function App() {
 
     if (!email) return;
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = email
+      .trim()
+      .toLowerCase();
 
-    localStorage.setItem("userEmail", normalizedEmail);
-    setCurrentUserEmail(normalizedEmail);
+    localStorage.setItem(
+      "userEmail",
+      normalizedEmail
+    );
+
+    setCurrentUserEmail(
+      normalizedEmail
+    );
   }
 
   function requestSubscription() {
     const name =
-      window.prompt("أدخل اسمك:", "متعلم جديد") || "متعلم جديد";
+      window.prompt(
+        "أدخل اسمك:",
+        "متعلم جديد"
+      ) || "متعلم جديد";
 
     const receipt =
       window.prompt(
@@ -1373,7 +2106,10 @@ export default function App() {
       status: "pending",
     };
 
-    saveRequests([...requests, newRequest]);
+    saveRequests([
+      ...requests,
+      newRequest,
+    ]);
 
     window.alert(
       "تم تسجيل طلب الاشتراك محليًا. يحتاج الطلب إلى مراجعة المشرف."
@@ -1384,28 +2120,40 @@ export default function App() {
     saveRequests(
       requests.map((request) =>
         request.id === id
-          ? { ...request, status: "approved" }
+          ? {
+              ...request,
+              status: "approved",
+            }
           : request
       )
     );
 
-    window.alert("تم قبول الطلب.");
+    window.alert(
+      "تم قبول الطلب."
+    );
   }
 
   function rejectRequest(id) {
     saveRequests(
       requests.map((request) =>
         request.id === id
-          ? { ...request, status: "rejected" }
+          ? {
+              ...request,
+              status: "rejected",
+            }
           : request
       )
     );
 
-    window.alert("تم رفض الطلب.");
+    window.alert(
+      "تم رفض الطلب."
+    );
   }
 
   function openStage(stage) {
     setSelectedStage(stage);
+    setSelectedLesson(null);
+    setAssessmentResult(null);
     setView("stage");
   }
 
@@ -1420,9 +2168,18 @@ export default function App() {
     setView("assessment");
   }
 
-  function finishAssessment(score, total) {
-    setAssessmentResult({ score, total });
-    setView("assessment-result");
+  function finishAssessment(
+    score,
+    total
+  ) {
+    setAssessmentResult({
+      score,
+      total,
+    });
+
+    setView(
+      "assessment-result"
+    );
   }
 
   function goHome() {
@@ -1450,12 +2207,17 @@ export default function App() {
         <HomeScreen
           stages={stages}
           onStage={openStage}
-          onExamCenter={() => setView("exam-center")}
+          onExamCenter={() =>
+            setView("exam-center")
+          }
         />
       );
     }
 
-    if (view === "stage" && selectedStage) {
+    if (
+      view === "stage" &&
+      selectedStage
+    ) {
       return (
         <StageScreen
           stage={selectedStage}
@@ -1465,22 +2227,32 @@ export default function App() {
       );
     }
 
-    if (view === "lesson" && selectedLesson) {
+    if (
+      view === "lesson" &&
+      selectedLesson
+    ) {
       return (
         <LessonScreen
           lesson={selectedLesson}
           onBack={goBackToStage}
-          onAssessment={openAssessment}
+          onAssessment={
+            openAssessment
+          }
         />
       );
     }
 
-    if (view === "assessment" && selectedLesson) {
+    if (
+      view === "assessment" &&
+      selectedLesson
+    ) {
       return (
         <AssessmentScreen
           lesson={selectedLesson}
           onBack={goBackToStage}
-          onFinish={finishAssessment}
+          onFinish={
+            finishAssessment
+          }
         />
       );
     }
@@ -1490,15 +2262,22 @@ export default function App() {
       selectedLesson &&
       assessmentResult
     ) {
-      const percentage = Math.round(
-        (assessmentResult.score / assessmentResult.total) * 100
-      );
+      const percentage =
+        assessmentResult.total === 0
+          ? 0
+          : Math.round(
+              (assessmentResult.score /
+                assessmentResult.total) *
+                100
+            );
 
       return (
         <main className="w-full max-w-3xl">
           <section className="bg-white border rounded-3xl p-8 text-center">
             <div className="text-6xl mb-4">
-              {percentage >= 80 ? "🎉" : "📚"}
+              {percentage >= 80
+                ? "🎉"
+                : "📚"}
             </div>
 
             <h1 className="text-3xl font-black">
@@ -1511,7 +2290,8 @@ export default function App() {
 
             <div className="my-8 bg-slate-50 rounded-2xl p-6">
               <div className="text-5xl font-black text-blue-600">
-                {assessmentResult.score}/{assessmentResult.total}
+                {assessmentResult.score}/
+                {assessmentResult.total}
               </div>
 
               <p className="font-bold text-slate-600 mt-2">
@@ -1521,14 +2301,18 @@ export default function App() {
 
             <div className="flex flex-wrap gap-3 justify-center">
               <button
-                onClick={() => setView("assessment")}
+                onClick={() =>
+                  setView("assessment")
+                }
                 className="px-5 py-3 bg-blue-600 text-white rounded-xl font-bold"
               >
                 إعادة التقييم
               </button>
 
               <button
-                onClick={() => setView("lesson")}
+                onClick={() =>
+                  setView("lesson")
+                }
                 className="px-5 py-3 bg-slate-200 rounded-xl font-bold"
               >
                 العودة للدرس
@@ -1543,26 +2327,42 @@ export default function App() {
       return (
         <ExamCenter
           onBack={goHome}
-          onStartExam={startExam}
+          onStartExam={
+            startExam
+          }
         />
       );
     }
 
-    if (view === "exam" && selectedExam) {
+    if (
+      view === "exam" &&
+      selectedExam
+    ) {
       return (
         <ExamScreen
           exam={selectedExam}
-          onBack={() => setView("exam-center")}
+          onBack={() =>
+            setView(
+              "exam-center"
+            )
+          }
         />
       );
     }
 
-    if (view === "admin" && isAdmin) {
+    if (
+      view === "admin" &&
+      isAdmin
+    ) {
       return (
         <AdminScreen
           requests={requests}
-          onApprove={approveRequest}
-          onReject={rejectRequest}
+          onApprove={
+            approveRequest
+          }
+          onReject={
+            rejectRequest
+          }
           onBack={goHome}
         />
       );
@@ -1590,10 +2390,14 @@ export default function App() {
       className="min-h-screen bg-slate-100 p-4 md:p-6"
     >
       <Header
-        currentUserEmail={currentUserEmail}
+        currentUserEmail={
+          currentUserEmail
+        }
         isAdmin={isAdmin}
         onHome={goHome}
-        onAdmin={() => setView("admin")}
+        onAdmin={() =>
+          setView("admin")
+        }
       />
 
       {view === "home" && (
@@ -1611,28 +2415,30 @@ export default function App() {
         {page}
       </div>
 
-      {view === "stage" && selectedStage && !isAdmin && (
-        <div className="w-full max-w-5xl mx-auto mt-6">
-          <div className="bg-white border rounded-2xl p-5">
-            <h3 className="font-black text-slate-800">
-              🔐 حالة الاشتراك
-            </h3>
+      {view === "stage" &&
+        selectedStage &&
+        !isAdmin && (
+          <div className="w-full max-w-5xl mx-auto mt-6">
+            <div className="bg-white border rounded-2xl p-5">
+              <h3 className="font-black text-slate-800">
+                🔐 حالة الاشتراك
+              </h3>
 
-            <p className="text-sm text-slate-500 mt-1">
-              المحتوى التعليمي في هذه النسخة يعمل كواجهة تعليمية.
-              طلبات الاشتراك الحالية تجريبية ومحلية.
-            </p>
+              <p className="text-sm text-slate-500 mt-1">
+                المحتوى التعليمي في هذه النسخة يعمل كواجهة تعليمية. طلبات الاشتراك الحالية تجريبية ومحلية.
+              </p>
 
-            <button
-              onClick={requestSubscription}
-              className="mt-4 px-5 py-3 bg-amber-500 text-white rounded-xl font-black"
-            >
-              إرسال طلب اشتراك
-            </button>
+              <button
+                onClick={
+                  requestSubscription
+                }
+                className="mt-4 px-5 py-3 bg-amber-500 text-white rounded-xl font-black"
+              >
+                إرسال طلب اشتراك
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }
-
