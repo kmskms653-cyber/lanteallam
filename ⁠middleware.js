@@ -52,38 +52,41 @@ function strictAuthAndSubscription(req, res, next) {
 }
 
 module.exports = { strictAuthAndSubscription };
-// middleware.js - حماية قاطعة وتوجيه غير المشتركين
+// middleware.js - حماية قاطعة وتأكيد حجب إعدادات المشرف عن الجميع عدا المشرف
 
-export function enforceSubscriptionAndAdmin(req) {
-    const { pathname } = req.nextUrl || req.url;
+export function strictAdminProtection(req, res, next) {
+    // استخراج مسار الطلب ودور المستخدم (الذي يتم التحقق منه عبر التوكن أو الجلسة الآمنة)
+    const pathname = req.nextUrl ? req.nextUrl.pathname : req.path;
+    const user = req.user; // بيانات المستخدم الحالي
 
-    // 1. استثناء الصفحات العامة التي يجب أن يزورها المستخدم غير المشترك أو الزائر
-    const publicPaths = ['/login', '/register', '/subscription', '/api/login', '/api/register', '/'];
-    if (publicPaths.includes(pathname) || pathname.startsWith('/_next') || pathname.startsWith('/static')) {
-        return { authorized: true };
-    }
+    // التحقق مما إذا كان الطلب يستهدف لوحة الإدارة أو أيقونات إعدادات المشرف
+    const isAdminRoute = pathname.startsWith('/admin') || 
+                           pathname.startsWith('/api/admin') || 
+                           pathname.includes('/admin-settings');
 
-    // 2. حماية لوحة إدارة المشرف (Admin) منع قاطع لغير المشرف
-    if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
-        const userRole = req.user?.role; // يتم جلبها من التوكن أو الجلسة
-        if (userRole !== 'admin') {
-            return {
-                authorized: false,
-                redirectUrl: '/dashboard?error=unauthorized_admin'
-            };
+    if (isAdminRoute) {
+        // حجب تام: إذا لم يكن المستخدم موجوداً، أو لم يكن دوره 'admin' حصرياً
+        if (!user || user.role !== 'admin') {
+            
+            // إذا كان الطلب عبر الـ API، يتم إرجاع خطأ أمني صارم
+            if (pathname.startsWith('/api/')) {
+                return res.status(403).json({
+                    error: "ACCESS_DENIED",
+                    message: "وصول مرفوض: هذه المنطقة مخصصة للمشرف فقط ولا يمكن لأي دور آخر رؤيتها أو الوصول إليها."
+                });
+            }
+
+            // إذا كان الطلب عبر المتصفح، يتم إعادة التوجيه القسري بعيداً عن الرابط فوراً
+            // يمكن توجيهه إلى الصفحة الرئيسية أو صفحة تسجيل الدخول مع رسالة خطأ
+            if (res.redirect) {
+                return res.redirect('/login?error=admin_unauthorized');
+            }
+            return { authorized: false, redirect: '/login' };
         }
     }
 
-    // 3. منع قاطع لغير المشتركين من الدخول لأي قسم أو أيقونة تعليمية وتوجيههم للاشتراك
-    const userSubscription = req.user?.subscriptionStatus; // active, trialing, expired, null
-    const validSubscriptions = ['active', 'trialing'];
-
-    if (!validSubscriptions.includes(userSubscription)) {
-        return {
-            authorized: false,
-            redirectUrl: '/subscription?message=subscription_required_to_access_content'
-        };
-    }
-
+    // إذا كان المشرف الحقيقي، يُسمح له بالمرور
     return { authorized: true };
+}
+
 }
